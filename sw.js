@@ -1,25 +1,26 @@
-const CACHE_NAME = 'eyecamp-v7';
+const CACHE_NAME = 'eyecamp-v10';
 
-// Core pages required to boot the app
-const PRECACHE_URLS = [
+const STATIC_ASSETS = [
+  './',
   'index.html',
-  'manifest.json'
+  'manifest.json',
+  'icon-192.png',
+  'icon-512.png'
 ];
 
-// 1. Install & Cache assets safely
+// Pre-cache static assets safely
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Fetch each asset individually so one 404 does not break the whole offline engine
       return Promise.allSettled(
-        PRECACHE_URLS.map((url) => cache.add(new Request(url, { cache: 'reload' })))
+        STATIC_ASSETS.map((url) => cache.add(new Request(url, { cache: 'reload' })))
       );
     })
   );
   self.skipWaiting();
 });
 
-// 2. Clear old caches
+// Clear older caches on activation
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -33,9 +34,21 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. Intercept requests: Cache-First with Network fallback
+// Intercept network requests safely
 self.addEventListener('fetch', (event) => {
+  // Only intercept GET requests
   if (event.request.method !== 'GET') return;
+
+  // CRITICAL FIX: Only handle http: and https: schemes (ignores chrome-extension://, moz-extension://, etc.)
+  const url = new URL(event.request.url);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+
+  // Do not intercept or cache Google Apps Script calls
+  if (url.hostname.includes('script.google.com') || url.hostname.includes('googleusercontent.com')) {
+    return;
+  }
 
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
@@ -45,17 +58,21 @@ self.addEventListener('fetch', (event) => {
 
       return fetch(event.request)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          // Verify response is valid and from a cacheable HTTP/S source before saving
+          if (
+            networkResponse &&
+            networkResponse.status === 200 &&
+            (networkResponse.type === 'basic' || networkResponse.type === 'cors')
+          ) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return networkResponse;
         })
         .catch(async () => {
-          // Fallback for navigation requests when completely offline
-          if (event.request.mode === 'navigate') {
-            const fallback = await caches.match('index.html') || await caches.match('./index.html');
-            if (fallback) return fallback;
+          // Serve offline fallback for page navigation
+          if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+            return caches.match('index.html') || caches.match('./');
           }
         });
     })
