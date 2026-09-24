@@ -1,20 +1,27 @@
-const CACHE_NAME = 'eyecamp-cache-v4';
-const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon.svg'
+const CACHE_NAME = 'eyecamp-v7';
+
+// Core pages required to boot the app
+const PRECACHE_URLS = [
+  'index.html',
+  'manifest.json'
 ];
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+// 1. Install & Cache assets safely
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      // Fetch each asset individually so one 404 does not break the whole offline engine
+      return Promise.allSettled(
+        PRECACHE_URLS.map((url) => cache.add(new Request(url, { cache: 'reload' })))
+      );
+    })
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
+// 2. Clear old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys.map((key) => {
@@ -26,27 +33,31 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+// 3. Intercept requests: Cache-First with Network fallback
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
 
-  e.respondWith(
-    fetch(e.request)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(e.request, responseClone);
-          });
-        }
-        return networkResponse;
-      })
-      .catch(async () => {
-        const cachedResponse = await caches.match(e.request);
-        if (cachedResponse) return cachedResponse;
+  event.respondWith(
+    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
 
-        if (e.request.mode === 'navigate') {
-          return caches.match('./index.html') || caches.match('./');
-        }
-      })
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          // Fallback for navigation requests when completely offline
+          if (event.request.mode === 'navigate') {
+            const fallback = await caches.match('index.html') || await caches.match('./index.html');
+            if (fallback) return fallback;
+          }
+        });
+    })
   );
 });
