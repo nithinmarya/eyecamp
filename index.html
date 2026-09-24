@@ -289,5 +289,16 @@
     document.getElementById('examDate').value = new Date().toISOString().split('T')[0];
     document.getElementById('lookupUID').value = '';
     document.getElementById('syncFeedback').textContent = 'Ready for new patient';
+    // 5. Register Service Worker for PWA and Offline Support
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js', { scope: './' })
+        .then((reg) => {
+          console.log('SW Registered successfully with scope:', reg.scope);
+          reg.update();
+        })
+        .catch((err) => console.error('SW Registration Failed:', err));
+    });
+  }
   }
 </script>
