@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- iOS Safari Requirements -->
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="EyeCamp" />
-<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'><rect width='512' height='512' rx='100' fill='%231e3a8a'/><circle cx='256' cy='256' r='64' fill='%2338bdf8'/></svg>" />
-  <!-- PWA Headers -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zamindar Eye Camp - Real-Time Multi-Station</title>
+
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1e3a8a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
 
   <style>
     :root {
@@ -34,18 +32,20 @@
     .online { color: var(--success); }
     .offline { color: var(--danger); }
     
-    .action-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-    .btn { padding: 9px 14px; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-    .btn-sync { background: var(--success); color: white; }
-    .btn-export { background: #0f172a; color: white; }
-    .btn-submit { background: var(--primary); color: white; width: 100%; padding: 12px; font-size: 1.05rem; margin-top: 15px; }
-
     .toggle-bar { display: flex; gap: 8px; margin-bottom: 16px; }
-    .toggle-btn { flex: 1; padding: 10px; font-size: 1rem; font-weight: bold; border: 2px solid var(--primary); border-radius: 6px; cursor: pointer; background: white; color: var(--primary); transition: 0.2s; }
+    .toggle-btn { flex: 1; padding: 10px; font-size: 0.95rem; font-weight: bold; border: 2px solid var(--primary); border-radius: 6px; cursor: pointer; background: white; color: var(--primary); }
     .toggle-btn.active { background: var(--primary); color: white; }
 
-    fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 16px; }
+    /* Lookup Toolbar */
+    .lookup-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 12px; margin-bottom: 16px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .lookup-input { flex: 1; min-width: 180px; padding: 9px; border: 1px solid var(--border); border-radius: 4px; font-weight: bold; }
+
+    fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-bottom: 18px; position: relative; }
     legend { font-weight: bold; color: var(--primary); padding: 0 6px; font-size: 0.95rem; }
+
+    .section-save-btn { margin-top: 12px; width: 100%; padding: 10px; background: var(--secondary); color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .section-save-btn:hover { background: #0369a1; }
+    .section-save-btn.saved { background: var(--success); }
 
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
@@ -61,23 +61,13 @@
     .check-item { display: flex; align-items: center; gap: 5px; cursor: pointer; }
     .check-box-panel { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
     .sub-heading { font-weight: 600; font-size: 0.85rem; color: #1e293b; margin-bottom: 6px; display: block; }
-
     .pass-refer { display: flex; gap: 15px; background: #f8fafc; padding: 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 8px; }
-    .counter-badge { background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; }
 
-    .app-footer {
-      text-align: center;
-      margin-top: 25px;
-      padding-top: 15px;
-      border-top: 1px solid #e2e8f0;
-      font-size: 0.85rem;
-      color: #64748b;
-      letter-spacing: 0.3px;
-    }
-    .app-footer strong {
-      color: var(--primary);
-      font-weight: 600;
-    }
+    .btn { padding: 9px 14px; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .btn-search { background: var(--primary); color: white; }
+    .btn-new { background: #64748b; color: white; }
+
+    .app-footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 0.85rem; color: #64748b; }
   </style>
 </head>
 <body>
@@ -85,232 +75,221 @@
 <div class="container">
   <div class="header">
     <h2>ZAMINDAR MICROSURGICAL EYE CENTRE</h2>
-    <h4 id="formHeaderTitle">Community Outreach Eye Screening (Adults)</h4>
+    <h4 id="formHeaderTitle">Community Outreach Eye Screening (Real-Time Stations)</h4>
   </div>
 
-  <!-- Form Switcher -->
+  <div class="status-bar">
+    <div id="netStatus" class="online">● Online</div>
+    <div id="syncFeedback">Ready</div>
+  </div>
+
+  <!-- Real-Time Patient Lookup -->
+  <div class="lookup-card">
+    <input type="text" id="lookupUID" class="lookup-input" placeholder="Enter Unique ID (e.g. ZMEC-001)" />
+    <button type="button" class="btn btn-search" onclick="fetchPatientByUID()">🔍 Load Patient</button>
+    <button type="button" class="btn btn-new" onclick="startNewPatient()">➕ Clear / New</button>
+  </div>
+
   <div class="toggle-bar">
     <button type="button" id="tabAdult" class="toggle-btn active" onclick="setFormMode('Adult')">👤 Adults Form</button>
     <button type="button" id="tabChild" class="toggle-btn" onclick="setFormMode('Child')">🧒 Children Form</button>
   </div>
   <input type="hidden" id="form_type" value="Adult" />
 
-  <div class="status-bar">
-    <div id="netStatus" class="online">● Online</div>
-    <div>Saved Locally: <span id="localCount" class="counter-badge">0</span> | Pending Sync: <span id="pendingCount" class="counter-badge">0</span></div>
-  </div>
-
-  <div class="action-bar">
-    <button class="btn btn-export" onclick="exportToCSV()">📥 Download Local Excel/CSV</button>
-    <button class="btn btn-sync" onclick="syncWithGoogleSheet()">☁️ Sync to Google Sheet</button>
-  </div>
-
-  <form id="screeningForm">
-    <!-- Demographics -->
-    <fieldset>
-      <legend>1. Demographics & Identification</legend>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Screening Site *</label>
-          <input type="text" id="site" required placeholder="Camp Location / School / Area" />
-        </div>
-        <div class="form-group">
-          <label>Unique ID *</label>
-          <input type="text" id="uid" required placeholder="e.g. ZMEC-2026-001" />
-        </div>
+  <!-- Section 1: Registration -->
+  <fieldset id="sec1">
+    <legend>Station 1: Registration & Demographics</legend>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Screening Site *</label>
+        <input type="text" id="site" required placeholder="Location" />
       </div>
-      <div class="grid-4">
-        <div class="form-group">
-          <label>Patient Name *</label>
-          <input type="text" id="name" required />
-        </div>
-        <div class="form-group">
-          <label>Age *</label>
-          <input type="number" id="age" min="1" max="120" required onchange="handleAgeAutoSwitch(this.value)" />
-        </div>
-        <div class="form-group">
-          <label>Gender *</label>
-          <select id="gender" required>
-            <option value="">Select</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Exam Date</label>
-          <input type="date" id="examDate" required />
-        </div>
+      <div class="form-group">
+        <label>Unique ID *</label>
+        <input type="text" id="uid" required placeholder="ZMEC-2026-001" onchange="syncLookupField(this.value)" />
       </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Phone Number</label>
-          <input type="tel" id="phone" placeholder="10-digit mobile number" />
-        </div>
-        <div class="form-group" id="schoolClassGroup" style="display: none;">
-          <label>School Name / Class (Children)</label>
-          <input type="text" id="school_class" placeholder="e.g. Standard 5th" />
-        </div>
+    </div>
+    <div class="grid-4">
+      <div class="form-group">
+        <label>Patient Name *</label>
+        <input type="text" id="name" required />
       </div>
-    </fieldset>
+      <div class="form-group">
+        <label>Age *</label>
+        <input type="number" id="age" min="1" max="120" required onchange="handleAgeAutoSwitch(this.value)" />
+      </div>
+      <div class="form-group">
+        <label>Gender *</label>
+        <select id="gender">
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Exam Date</label>
+        <input type="date" id="examDate" required />
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="phone" />
+      </div>
+      <div class="form-group" id="schoolClassGroup" style="display: none;">
+        <label>School Name / Class (Children)</label>
+        <input type="text" id="school_class" />
+      </div>
+    </div>
+    <button type="button" class="section-save-btn" onclick="saveSection(1)">💾 Save Station 1 Data</button>
+  </fieldset>
 
-    <!-- Medical History -->
-    <fieldset>
-      <legend>2. Medical History</legend>
-      <span class="sub-heading">Blurred Vision:</span>
-      <div class="check-group" style="margin-bottom: 8px;">
-        <label class="check-item"><input type="checkbox" name="blurred" value="Distance"> Distance</label>
-        <label class="check-item"><input type="checkbox" name="blurred" value="Near"> Near</label>
-        <label class="check-item"><input type="checkbox" name="blurred" value="Both"> Both</label>
-      </div>
+  <!-- Section 2: Medical History -->
+  <fieldset id="sec2">
+    <legend>Station 2: Medical History</legend>
+    <span class="sub-heading">Blurred Vision:</span>
+    <div class="check-group" style="margin-bottom: 8px;">
+      <label class="check-item"><input type="checkbox" name="blurred" value="Distance"> Distance</label>
+      <label class="check-item"><input type="checkbox" name="blurred" value="Near"> Near</label>
+      <label class="check-item"><input type="checkbox" name="blurred" value="Both"> Both</label>
+    </div>
 
-      <span class="sub-heading">General & Ocular Conditions:</span>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" id="h_pain"> Eye with pain</label>
-        <label class="check-item"><input type="checkbox" id="h_spectacles"> Wears spectacles</label>
-        <label class="check-item"><input type="checkbox" id="h_meds"> Uses eye drops/medication</label>
-        <label class="check-item"><input type="checkbox" id="h_surgery"> Eye surgery history</label>
-        <span id="adultHistoryGroup" style="display: contents;">
-          <label class="check-item"><input type="checkbox" id="h_diabetes"> Diabetes</label>
-          <label class="check-item"><input type="checkbox" id="h_hypertension"> Hypertension</label>
-        </span>
-        <span id="childHistoryGroup" style="display: none;">
-          <label class="check-item"><input type="checkbox" id="h_squint"> History of squint / lazy eye</label>
-          <label class="check-item"><input type="checkbox" id="h_headache"> Frequent headaches while reading</label>
-        </span>
-      </div>
+    <span class="sub-heading">General & Ocular Conditions:</span>
+    <div class="check-group">
+      <label class="check-item"><input type="checkbox" id="h_pain"> Eye with pain</label>
+      <label class="check-item"><input type="checkbox" id="h_spectacles"> Wears spectacles</label>
+      <label class="check-item"><input type="checkbox" id="h_meds"> Uses eye drops</label>
+      <label class="check-item"><input type="checkbox" id="h_surgery"> Eye surgery history</label>
+      <span id="adultHistoryGroup" style="display: contents;">
+        <label class="check-item"><input type="checkbox" id="h_diabetes"> Diabetes</label>
+        <label class="check-item"><input type="checkbox" id="h_hypertension"> Hypertension</label>
+      </span>
+      <span id="childHistoryGroup" style="display: none;">
+        <label class="check-item"><input type="checkbox" id="h_squint"> Squint / lazy eye</label>
+        <label class="check-item"><input type="checkbox" id="h_headache"> Headaches reading</label>
+      </span>
+    </div>
 
-      <div class="pass-refer">
-        <label><strong>History Outcome:</strong></label>
-        <label><input type="radio" name="history_res" value="Pass" checked> Pass</label>
-        <label><input type="radio" name="history_res" value="Refer"> Refer</label>
-      </div>
-    </fieldset>
+    <div class="pass-refer">
+      <label><strong>History Outcome:</strong></label>
+      <label><input type="radio" name="history_res" value="Pass" checked> Pass</label>
+      <label><input type="radio" name="history_res" value="Refer"> Refer</label>
+    </div>
+    <button type="button" class="section-save-btn" onclick="saveSection(2)">💾 Save Station 2 Data</button>
+  </fieldset>
 
-    <!-- Visual Acuity -->
-    <fieldset>
-      <legend>3. Visual Acuity Testing</legend>
-      <span class="sub-heading">Distance Visual Acuity</span>
+  <!-- Section 3: Visual Acuity -->
+  <fieldset id="sec3">
+    <legend>Station 3: Visual Acuity</legend>
+    <span class="sub-heading">Distance Visual Acuity</span>
+    <div class="grid-3">
+      <div class="form-group">
+        <label>Condition</label>
+        <select id="dist_cond"><option value="Without spectacles">Without spectacles</option><option value="With spectacles">With spectacles</option></select>
+      </div>
+      <div class="form-group"><label>Right Eye (RE)</label><input type="text" id="dist_re" placeholder="6/6" /></div>
+      <div class="form-group"><label>Left Eye (LE)</label><input type="text" id="dist_le" placeholder="6/6" /></div>
+    </div>
+    <div class="pass-refer">
+      <label><strong>Distance VA Outcome:</strong></label>
+      <label><input type="radio" name="dist_res" value="Pass" checked> Pass</label>
+      <label><input type="radio" name="dist_res" value="Refer"> Refer</label>
+    </div>
+
+    <div id="nearVisionContainer">
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 12px 0;">
+      <span class="sub-heading">Near Visual Acuity (Adults)</span>
       <div class="grid-3">
         <div class="form-group">
           <label>Condition</label>
-          <select id="dist_cond"><option value="Without spectacles">Without spectacles</option><option value="With spectacles">With spectacles</option></select>
+          <select id="near_cond"><option value="Without spectacles">Without spectacles</option><option value="With spectacles">With spectacles</option></select>
         </div>
-        <div class="form-group"><label>Right Eye (RE)</label><input type="text" id="dist_re" placeholder="6/6" /></div>
-        <div class="form-group"><label>Left Eye (LE)</label><input type="text" id="dist_le" placeholder="6/6" /></div>
+        <div class="form-group"><label>Right Eye (RE)</label><input type="text" id="near_re" placeholder="N6" /></div>
+        <div class="form-group"><label>Left Eye (LE)</label><input type="text" id="near_le" placeholder="N6" /></div>
       </div>
       <div class="pass-refer">
-        <label><strong>Distance VA Outcome:</strong></label>
-        <label><input type="radio" name="dist_res" value="Pass" checked> Pass</label>
-        <label><input type="radio" name="dist_res" value="Refer"> Refer</label>
+        <label><strong>Near VA Outcome:</strong></label>
+        <label><input type="radio" name="near_res" value="Pass" checked> Pass</label>
+        <label><input type="radio" name="near_res" value="Refer"> Refer</label>
       </div>
+    </div>
+    <button type="button" class="section-save-btn" onclick="saveSection(3)">💾 Save Station 3 Data</button>
+  </fieldset>
 
-      <!-- Near Acuity (Adults Only) -->
-      <div id="nearVisionContainer">
-        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 12px 0;">
-        <span class="sub-heading">Near Visual Acuity (Adults)</span>
-        <div class="grid-3">
-          <div class="form-group">
-            <label>Condition</label>
-            <select id="near_cond"><option value="Without spectacles">Without spectacles</option><option value="With spectacles">With spectacles</option></select>
-          </div>
-          <div class="form-group"><label>Right Eye (RE)</label><input type="text" id="near_re" placeholder="N6" /></div>
-          <div class="form-group"><label>Left Eye (LE)</label><input type="text" id="near_le" placeholder="N6" /></div>
-        </div>
-        <div class="pass-refer">
-          <label><strong>Near VA Outcome:</strong></label>
-          <label><input type="radio" name="near_res" value="Pass" checked> Pass</label>
-          <label><input type="radio" name="near_res" value="Refer"> Refer</label>
-        </div>
+  <!-- Section 4: External Eye Exam & Referral -->
+  <fieldset id="sec4">
+    <legend>Station 4: Basic External Eye Exam & Sign-Off</legend>
+    <div class="check-box-panel">
+      <span class="sub-heading">Alignment:</span>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="ext_align" value="Straight Eyes" checked> Straight Eyes</label>
+        <label class="check-item"><input type="checkbox" name="ext_align" value="Mis-aligned Eyes"> Mis-aligned Eyes</label>
       </div>
-    </fieldset>
+    </div>
 
-    <!-- Basic External Examination (Multi-Select Checkboxes) -->
-    <fieldset>
-      <legend>4. Basic External Eye Examination</legend>
-      
-      <!-- Alignment -->
-      <div class="check-box-panel">
-        <span class="sub-heading">Eye Alignment:</span>
-        <div class="check-group">
-          <label class="check-item"><input type="checkbox" name="ext_align" value="Straight Eyes" checked> Straight Eyes</label>
-          <label class="check-item"><input type="checkbox" name="ext_align" value="Mis-aligned Eyes"> Mis-aligned Eyes</label>
-        </div>
+    <div class="check-box-panel">
+      <span class="sub-heading">Globe:</span>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="ext_globe" value="Normal" checked> Normal</label>
+        <label class="check-item"><input type="checkbox" name="ext_globe" value="Anterior Displacement"> Anterior Displacement</label>
+        <label class="check-item"><input type="checkbox" name="ext_globe" value="Posterior Displacement"> Posterior Displacement</label>
+        <label class="check-item"><input type="checkbox" name="ext_globe" value="Other"> Other</label>
       </div>
+    </div>
 
-      <!-- Globe -->
-      <div class="check-box-panel">
-        <span class="sub-heading">Globe:</span>
-        <div class="check-group">
-          <label class="check-item"><input type="checkbox" name="ext_globe" value="Normal" checked> Normal</label>
-          <label class="check-item"><input type="checkbox" name="ext_globe" value="Anterior Displacement"> Anterior Displacement</label>
-          <label class="check-item"><input type="checkbox" name="ext_globe" value="Posterior Displacement"> Posterior Displacement</label>
-          <label class="check-item"><input type="checkbox" name="ext_globe" value="Other"> Other</label>
-        </div>
+    <div class="check-box-panel">
+      <span class="sub-heading">Eyelids & Lashes:</span>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Normal" checked> Normal</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Swelling"> Swelling</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Drooping"> Drooping</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Discharge/Crusts"> Discharge/Crusts</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Turned Inward"> Turned Inward</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Abnormal Lid Closure"> Abnormal Lid Closure</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Other"> Other</label>
       </div>
+    </div>
 
-      <!-- Eyelids and Eye Lashes -->
-      <div class="check-box-panel">
-        <span class="sub-heading">Eyelids and Eye Lashes:</span>
-        <div class="check-group">
-          <label class="check-item"><input type="checkbox" name="ext_lids" value="Normal" checked> Normal</label>
-          <label class="check-item"><input type="checkbox" name="ext_lids" value="Swelling"> Swelling</label>
-          <label class="check-item"><input type="checkbox" name="ext_lids" value="Drooping"> Drooping</label>
-          <label class="check-item"><input type="checkbox" name="ext_lids" value="Discharge/Crusts"> Discharge / Crusts</label>
-          <label class="check-item"><input type="checkbox" name="ext_lids" value="Turned Inward"> Eyelashes Turned Inward</label>
-          <label class="check-item"><input type="checkbox" name="ext_lids" value="Abnormal Lid Closure"> Abnormal Lid Closure</label>
-          <label class="check-item"><input type="checkbox" name="ext_lids" value="Other"> Other</label>
-        </div>
+    <div class="check-box-panel">
+      <span class="sub-heading">White part (Conjunctiva/Sclera):</span>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="ext_white" value="Normal" checked> Normal</label>
+        <label class="check-item"><input type="checkbox" name="ext_white" value="Redness"> Redness</label>
+        <label class="check-item"><input type="checkbox" name="ext_white" value="Foreign Body"> Foreign Body</label>
+        <label class="check-item"><input type="checkbox" name="ext_white" value="Other"> Other</label>
       </div>
+    </div>
 
-      <!-- White part of the eye -->
-      <div class="check-box-panel">
-        <span class="sub-heading">White part of the eye (Conjunctiva & Sclera):</span>
-        <div class="check-group">
-          <label class="check-item"><input type="checkbox" name="ext_white" value="Normal" checked> Normal</label>
-          <label class="check-item"><input type="checkbox" name="ext_white" value="Redness"> Redness</label>
-          <label class="check-item"><input type="checkbox" name="ext_white" value="Foreign Body"> Foreign Body</label>
-          <label class="check-item"><input type="checkbox" name="ext_white" value="Other"> Other</label>
-        </div>
+    <div class="check-box-panel">
+      <span class="sub-heading">Black part (Cornea/Pupil/Lens):</span>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="ext_black" value="Normal" checked> Normal</label>
+        <label class="check-item"><input type="checkbox" name="ext_black" value="White/Grey/Hazy"> White/Grey/Hazy</label>
+        <label class="check-item"><input type="checkbox" name="ext_black" value="Abnormal Shape"> Abnormal Shape</label>
+        <label class="check-item"><input type="checkbox" name="ext_black" value="Other"> Other</label>
       </div>
+    </div>
 
-      <!-- Black part of the eye -->
-      <div class="check-box-panel">
-        <span class="sub-heading">Black part of the eye (Cornea, Pupil, Iris, Lens):</span>
-        <div class="check-group">
-          <label class="check-item"><input type="checkbox" name="ext_black" value="Normal" checked> Normal</label>
-          <label class="check-item"><input type="checkbox" name="ext_black" value="White/Grey/Hazy"> White / Grey / Hazy</label>
-          <label class="check-item"><input type="checkbox" name="ext_black" value="Abnormal Shape"> Abnormal Shape</label>
-          <label class="check-item"><input type="checkbox" name="ext_black" value="Other"> Other</label>
-        </div>
+    <div class="pass-refer">
+      <label><strong>External Exam Outcome:</strong></label>
+      <label><input type="radio" name="ext_res" value="Pass" checked> Pass</label>
+      <label><input type="radio" name="ext_res" value="Refer"> Refer</label>
+    </div>
+
+    <div class="grid-2" style="margin-top: 10px;">
+      <div class="form-group">
+        <label>Referred to ZMEC Eye Hospital?</label>
+        <select id="referred_zmec"><option value="No">No</option><option value="Yes">Yes</option></select>
       </div>
-
-      <div class="pass-refer">
-        <label><strong>External Exam Outcome:</strong></label>
-        <label><input type="radio" name="ext_res" value="Pass" checked> Pass</label>
-        <label><input type="radio" name="ext_res" value="Refer"> Refer</label>
+      <div class="form-group">
+        <label>Optometrist Name *</label>
+        <input type="text" id="optom_name" placeholder="Optometrist Name/ID" />
       </div>
-    </fieldset>
+    </div>
+    <button type="button" class="section-save-btn" onclick="saveSection(4)">💾 Save Station 4 Data</button>
+  </fieldset>
 
-    <!-- Final Referral & Sign-off -->
-    <fieldset>
-      <legend>5. Final Referral & Optometrist Sign-off</legend>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Patient Referred to ZMEC Eye Hospital?</label>
-          <select id="referred_zmec"><option value="No">No</option><option value="Yes">Yes</option></select>
-        </div>
-        <div class="form-group">
-          <label>Optometrist Name *</label>
-          <input type="text" id="optom_name" placeholder="Name or Staff ID" required />
-        </div>
-      </div>
-    </fieldset>
-
-    <button type="submit" class="btn btn-submit">💾 Save Record Locally</button>
-  </form>
-
-  <!-- Footer Credit -->
   <footer class="app-footer">
     Developed by <strong>Navadhi Cognitech</strong>
   </footer>
@@ -320,24 +299,32 @@
   // >>> REPLACE WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL <<<
   const APPS_SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
 
-  let db;
   document.getElementById('examDate').value = new Date().toISOString().split('T')[0];
 
-  // Helper function to extract multi-checkbox selections as comma-separated text
-  function getCheckedValues(name) {
-    const nodes = document.querySelectorAll(`input[name="${name}"]:checked`);
-    const values = Array.from(nodes).map(n => n.value);
-    return values.length > 0 ? values.join('; ') : 'None';
+  function syncLookupField(val) {
+    document.getElementById('lookupUID').value = val;
   }
 
-  // 1. Dynamic Mode Switcher (Adult vs Child)
+  function getCheckedValues(name) {
+    const nodes = document.querySelectorAll(`input[name="${name}"]:checked`);
+    return Array.from(nodes).map(n => n.value).join('; ') || 'None';
+  }
+
+  function setCheckedValues(name, joinedStr) {
+    if (!joinedStr) return;
+    const items = joinedStr.split(';').map(s => s.trim());
+    document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
+      cb.checked = items.includes(cb.value);
+    });
+  }
+
+  // 1. Form Mode Toggle (Adult / Child)
   function setFormMode(mode) {
     document.getElementById('form_type').value = mode;
     const isAdult = (mode === 'Adult');
 
     document.getElementById('tabAdult').className = 'toggle-btn' + (isAdult ? ' active' : '');
     document.getElementById('tabChild').className = 'toggle-btn' + (!isAdult ? ' active' : '');
-    document.getElementById('formHeaderTitle').textContent = `Community Outreach Eye Screening (${isAdult ? 'Adults' : 'Children'})`;
 
     document.getElementById('adultHistoryGroup').style.display = isAdult ? 'contents' : 'none';
     document.getElementById('childHistoryGroup').style.display = !isAdult ? 'contents' : 'none';
@@ -356,208 +343,197 @@
     }
   }
 
-  // 2. IndexedDB Setup
-  const req = indexedDB.open('ZamindarUnifiedCampsDB', 1);
-  req.onupgradeneeded = (e) => {
-    db = e.target.result;
-    if (!db.objectStoreNames.contains('camp_screenings')) {
-      const store = db.createObjectStore('camp_screenings', { keyPath: 'id', autoIncrement: true });
-      store.createIndex('synced', 'synced', { unique: false });
+  // 2. Real-Time Patient Fetch from Google Sheet
+  async function fetchPatientByUID() {
+    const uid = document.getElementById('lookupUID').value.trim();
+    if (!uid) {
+      alert("Please enter a Unique ID to search.");
+      return;
     }
-  };
-  req.onsuccess = (e) => {
-    db = e.target.result;
-    refreshCounters();
-  };
 
-  // 3. Network Status Listener
-  function updateNetworkUI() {
-    const el = document.getElementById('netStatus');
-    if (navigator.onLine) {
-      el.textContent = '● Online';
-      el.className = 'online';
-    } else {
-      el.textContent = '● Offline (Local Safe Mode)';
-      el.className = 'offline';
+    const feedback = document.getElementById('syncFeedback');
+    feedback.textContent = "⏳ Fetching patient from cloud...";
+
+    try {
+      const resp = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: "fetch_patient", uid: uid }),
+        redirect: 'follow'
+      });
+
+      const res = await resp.json();
+
+      if (res.status === "found") {
+        const p = res.patient;
+        setFormMode(p.form_type || 'Adult');
+
+        // Populate Station 1
+        document.getElementById('site').value = p.site || '';
+        document.getElementById('uid').value = p.uid || uid;
+        document.getElementById('name').value = p.name || '';
+        document.getElementById('age').value = p.age || '';
+        document.getElementById('gender').value = p.gender || '';
+        if (p.examDate) document.getElementById('examDate').value = p.examDate.substring(0, 10);
+        document.getElementById('phone').value = p.phone || '';
+        document.getElementById('school_class').value = p.school_class || '';
+
+        // Populate Station 2
+        setCheckedValues('blurred', p.blurred_vision);
+        document.getElementById('h_pain').checked = (p.eye_pain === 'Yes');
+        document.getElementById('h_spectacles').checked = (p.wears_spectacles === 'Yes');
+        document.getElementById('h_meds').checked = (p.uses_meds === 'Yes');
+        document.getElementById('h_surgery').checked = (p.surgery_history === 'Yes');
+        document.getElementById('h_diabetes').checked = (p.diabetes === 'Yes');
+        document.getElementById('h_hypertension').checked = (p.hypertension === 'Yes');
+        document.getElementById('h_squint').checked = (p.squint_lazy_eye === 'Yes');
+        document.getElementById('h_headache').checked = (p.headaches_reading === 'Yes');
+        if (p.history_outcome) {
+          const r = document.querySelector(`input[name="history_res"][value="${p.history_outcome}"]`);
+          if (r) r.checked = true;
+        }
+
+        // Populate Station 3
+        document.getElementById('dist_cond').value = p.dist_condition || 'Without spectacles';
+        document.getElementById('dist_re').value = (p.dist_re !== 'N/A' ? p.dist_re : '') || '';
+        document.getElementById('dist_le').value = (p.dist_le !== 'N/A' ? p.dist_le : '') || '';
+        if (p.dist_outcome) {
+          const r = document.querySelector(`input[name="dist_res"][value="${p.dist_outcome}"]`);
+          if (r) r.checked = true;
+        }
+        document.getElementById('near_cond').value = p.near_condition || 'Without spectacles';
+        document.getElementById('near_re').value = (p.near_re !== 'N/A' ? p.near_re : '') || '';
+        document.getElementById('near_le').value = (p.near_le !== 'N/A' ? p.near_le : '') || '';
+        if (p.near_outcome) {
+          const r = document.querySelector(`input[name="near_res"][value="${p.near_outcome}"]`);
+          if (r) r.checked = true;
+        }
+
+        // Populate Station 4
+        setCheckedValues('ext_align', p.ext_alignment);
+        setCheckedValues('ext_globe', p.ext_globe);
+        setCheckedValues('ext_lids', p.ext_eyelids_lashes);
+        setCheckedValues('ext_white', p.ext_white_conjunctiva);
+        setCheckedValues('ext_black', p.ext_black_cornea);
+        if (p.ext_outcome) {
+          const r = document.querySelector(`input[name="ext_res"][value="${p.ext_outcome}"]`);
+          if (r) r.checked = true;
+        }
+        document.getElementById('referred_zmec').value = p.referred_zmec || 'No';
+        document.getElementById('optom_name').value = p.optometrist || '';
+
+        feedback.textContent = `✅ Loaded: ${p.name || uid}`;
+      } else {
+        alert("Patient UID not found in Google Sheet. Check the ID or register them at Station 1.");
+        feedback.textContent = "UID Not Found";
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to connect to Google Sheet. Check internet connection.");
+      feedback.textContent = "Fetch Failed";
     }
   }
-  window.addEventListener('online', () => { updateNetworkUI(); autoSyncIfOnline(); });
-  window.addEventListener('offline', updateNetworkUI);
-  updateNetworkUI();
 
-  // 4. Save Record
-  document.getElementById('screeningForm').addEventListener('submit', (e) => {
-    e.preventDefault();
+  // 3. Save Specific Section to Google Sheet
+  async function saveSection(sectionNumber) {
+    const uid = document.getElementById('uid').value.trim();
+    if (!uid) {
+      alert("Please enter a Unique ID in Station 1 before saving.");
+      return;
+    }
 
     const mode = document.getElementById('form_type').value;
+    const btn = document.querySelector(`#sec${sectionNumber} .section-save-btn`);
+    const originalText = btn.textContent;
+    btn.textContent = "⏳ Syncing...";
+    btn.disabled = true;
 
-    const record = {
+    let payloadRecord = {
       form_type: mode,
-      site: document.getElementById('site').value,
-      uid: document.getElementById('uid').value,
-      name: document.getElementById('name').value,
-      age: document.getElementById('age').value,
-      gender: document.getElementById('gender').value,
-      examDate: document.getElementById('examDate').value,
-      phone: document.getElementById('phone').value || 'N/A',
-      school_class: mode === 'Child' ? (document.getElementById('school_class').value || 'N/A') : 'N/A',
-      blurred_vision: getCheckedValues('blurred'),
-      eye_pain: document.getElementById('h_pain').checked ? 'Yes' : 'No',
-      wears_spectacles: document.getElementById('h_spectacles').checked ? 'Yes' : 'No',
-      uses_meds: document.getElementById('h_meds').checked ? 'Yes' : 'No',
-      surgery_history: document.getElementById('h_surgery').checked ? 'Yes' : 'No',
-      diabetes: mode === 'Adult' ? (document.getElementById('h_diabetes').checked ? 'Yes' : 'No') : 'N/A',
-      hypertension: mode === 'Adult' ? (document.getElementById('h_hypertension').checked ? 'Yes' : 'No') : 'N/A',
-      squint_lazy_eye: mode === 'Child' ? (document.getElementById('h_squint').checked ? 'Yes' : 'No') : 'N/A',
-      headaches_reading: mode === 'Child' ? (document.getElementById('h_headache').checked ? 'Yes' : 'No') : 'N/A',
-      history_outcome: document.querySelector('input[name="history_res"]:checked').value,
-      dist_condition: document.getElementById('dist_cond').value,
-      dist_re: document.getElementById('dist_re').value || 'N/A',
-      dist_le: document.getElementById('dist_le').value || 'N/A',
-      dist_outcome: document.querySelector('input[name="dist_res"]:checked').value,
-      near_condition: mode === 'Adult' ? document.getElementById('near_cond').value : 'N/A',
-      near_re: mode === 'Adult' ? (document.getElementById('near_re').value || 'N/A') : 'N/A',
-      near_le: mode === 'Adult' ? (document.getElementById('near_le').value || 'N/A') : 'N/A',
-      near_outcome: mode === 'Adult' ? document.querySelector('input[name="near_res"]:checked').value : 'N/A',
-      ext_alignment: getCheckedValues('ext_align'),
-      ext_globe: getCheckedValues('ext_globe'),
-      ext_eyelids_lashes: getCheckedValues('ext_lids'),
-      ext_white_conjunctiva: getCheckedValues('ext_white'),
-      ext_black_cornea: getCheckedValues('ext_black'),
-      ext_outcome: document.querySelector('input[name="ext_res"]:checked').value,
-      referred_zmec: document.getElementById('referred_zmec').value,
-      optometrist: document.getElementById('optom_name').value,
-      timestamp: new Date().toLocaleString(),
-      synced: 0
+      uid: uid
     };
 
-    const tx = db.transaction('camp_screenings', 'readwrite');
-    tx.objectStore('camp_screenings').add(record);
-    tx.oncomplete = () => {
-      const siteVal = document.getElementById('site').value;
-      const optomVal = document.getElementById('optom_name').value;
-      const currentMode = document.getElementById('form_type').value;
-
-      document.getElementById('screeningForm').reset();
-      document.getElementById('site').value = siteVal;
-      document.getElementById('optom_name').value = optomVal;
-      document.getElementById('examDate').value = new Date().toISOString().split('T')[0];
-      setFormMode(currentMode);
-
-      // Re-check defaults for external checkboxes
-      document.querySelectorAll('input[value="Normal"], input[value="Straight Eyes"]').forEach(cb => cb.checked = true);
-
-      refreshCounters();
-      autoSyncIfOnline();
-    };
-  });
-
-  // 5. Update Counters
-  function refreshCounters() {
-    if (!db) return;
-    const tx = db.transaction('camp_screenings', 'readonly');
-    const store = tx.objectStore('camp_screenings');
-    const reqAll = store.getAll();
-    reqAll.onsuccess = () => {
-      const all = reqAll.result;
-      document.getElementById('localCount').textContent = all.length;
-      document.getElementById('pendingCount').textContent = all.filter(r => r.synced === 0).length;
-    };
-  }
-
-  // 6. Direct Local CSV/Excel Export (Offline-Proof with BOM)
-  function exportToCSV() {
-    if (!db) {
-      alert("Database is initializing. Please try again.");
-      return;
+    if (sectionNumber === 1) {
+      payloadRecord.site = document.getElementById('site').value;
+      payloadRecord.name = document.getElementById('name').value;
+      payloadRecord.age = document.getElementById('age').value;
+      payloadRecord.gender = document.getElementById('gender').value;
+      payloadRecord.examDate = document.getElementById('examDate').value;
+      payloadRecord.phone = document.getElementById('phone').value || 'N/A';
+      payloadRecord.school_class = document.getElementById('school_class').value || 'N/A';
+    } else if (sectionNumber === 2) {
+      payloadRecord.blurred_vision = getCheckedValues('blurred');
+      payloadRecord.eye_pain = document.getElementById('h_pain').checked ? 'Yes' : 'No';
+      payloadRecord.wears_spectacles = document.getElementById('h_spectacles').checked ? 'Yes' : 'No';
+      payloadRecord.uses_meds = document.getElementById('h_meds').checked ? 'Yes' : 'No';
+      payloadRecord.surgery_history = document.getElementById('h_surgery').checked ? 'Yes' : 'No';
+      payloadRecord.diabetes = mode === 'Adult' ? (document.getElementById('h_diabetes').checked ? 'Yes' : 'No') : 'N/A';
+      payloadRecord.hypertension = mode === 'Adult' ? (document.getElementById('h_hypertension').checked ? 'Yes' : 'No') : 'N/A';
+      payloadRecord.squint_lazy_eye = mode === 'Child' ? (document.getElementById('h_squint').checked ? 'Yes' : 'No') : 'N/A';
+      payloadRecord.headaches_reading = mode === 'Child' ? (document.getElementById('h_headache').checked ? 'Yes' : 'No') : 'N/A';
+      payloadRecord.history_outcome = document.querySelector('input[name="history_res"]:checked').value;
+    } else if (sectionNumber === 3) {
+      payloadRecord.dist_condition = document.getElementById('dist_cond').value;
+      payloadRecord.dist_re = document.getElementById('dist_re').value || 'N/A';
+      payloadRecord.dist_le = document.getElementById('dist_le').value || 'N/A';
+      payloadRecord.dist_outcome = document.querySelector('input[name="dist_res"]:checked').value;
+      payloadRecord.near_condition = mode === 'Adult' ? document.getElementById('near_cond').value : 'N/A';
+      payloadRecord.near_re = mode === 'Adult' ? (document.getElementById('near_re').value || 'N/A') : 'N/A';
+      payloadRecord.near_le = mode === 'Adult' ? (document.getElementById('near_le').value || 'N/A') : 'N/A';
+      payloadRecord.near_outcome = mode === 'Adult' ? document.querySelector('input[name="near_res"]:checked').value : 'N/A';
+    } else if (sectionNumber === 4) {
+      payloadRecord.ext_alignment = getCheckedValues('ext_align');
+      payloadRecord.ext_globe = getCheckedValues('ext_globe');
+      payloadRecord.ext_eyelids_lashes = getCheckedValues('ext_lids');
+      payloadRecord.ext_white_conjunctiva = getCheckedValues('ext_white');
+      payloadRecord.ext_black_cornea = getCheckedValues('ext_black');
+      payloadRecord.ext_outcome = document.querySelector('input[name="ext_res"]:checked').value;
+      payloadRecord.referred_zmec = document.getElementById('referred_zmec').value;
+      payloadRecord.optometrist = document.getElementById('optom_name').value || 'N/A';
     }
-    const tx = db.transaction('camp_screenings', 'readonly');
-    tx.objectStore('camp_screenings').getAll().onsuccess = (e) => {
-      const data = e.target.result;
-      if (!data || data.length === 0) {
-        alert("No patient records saved on this device yet.");
-        return;
-      }
-      const headers = Object.keys(data[0]);
-      const csvRows = [
-        headers.join(','),
-        ...data.map(r => headers.map(h => `"${(r[h] ?? '').toString().replace(/"/g, '""')}"`).join(','))
-      ];
-      const csvContent = '\uFEFF' + csvRows.join('\r\n');
 
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const fileName = `ZMEC_Eye_Screenings_${new Date().toISOString().slice(0, 10)}.csv`;
+    try {
+      const resp = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: "save_section", record: payloadRecord }),
+        redirect: 'follow'
+      });
 
-      if (navigator.msSaveBlob) {
-        navigator.msSaveBlob(blob, fileName);
-      } else {
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
+      const res = await resp.json();
+      if (res.status === 'success') {
+        btn.textContent = `✅ Station ${sectionNumber} Saved & Synced!`;
+        btn.className = "section-save-btn saved";
+        document.getElementById('syncFeedback').textContent = `● Last Synced UID: ${uid} (Sec ${sectionNumber})`;
         setTimeout(() => {
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        }, 250);
+          btn.textContent = originalText;
+          btn.className = "section-save-btn";
+          btn.disabled = false;
+        }, 2500);
+      } else {
+        alert("Save failed: " + res.message);
+        btn.textContent = originalText;
+        btn.disabled = false;
       }
-    };
-  }
-
-  // 7. Sync with Google Sheet
-  async function syncWithGoogleSheet(silent = false) {
-    if (!navigator.onLine || APPS_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
-      if (!silent && !navigator.onLine) alert("Device is offline. Connect to Wi-Fi/cellular first.");
-      return;
-    }
-
-    const tx = db.transaction('camp_screenings', 'readonly');
-    const store = tx.objectStore('camp_screenings');
-    store.getAll().onsuccess = async (e) => {
-      const unsynced = e.target.result.filter(r => r.synced === 0);
-      if (unsynced.length === 0) {
-        if (!silent) alert("All records are already synced.");
-        return;
-      }
-
-      try {
-        const resp = await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ records: unsynced })
-        });
-        const result = await resp.json();
-        if (result.status === 'success') {
-          const writeTx = db.transaction('camp_screenings', 'readwrite');
-          const writeStore = writeTx.objectStore('camp_screenings');
-          unsynced.forEach(item => {
-            item.synced = 1;
-            writeStore.put(item);
-          });
-          writeTx.oncomplete = () => {
-            refreshCounters();
-            if (!silent) alert(`Successfully synced ${unsynced.length} records!`);
-          };
-        }
-      } catch (err) {
-        console.error("Auto-sync error:", err);
-      }
-    };
-  }
-
-  function autoSyncIfOnline() {
-    if (navigator.onLine) {
-      syncWithGoogleSheet(true);
+    } catch (err) {
+      console.error(err);
+      alert("Network Error: Could not reach Google Sheets. Check your internet connection.");
+      btn.textContent = originalText;
+      btn.disabled = false;
     }
   }
 
-  // 8. Register Service Worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(console.error);
-    });
+  function startNewPatient() {
+    const siteVal = document.getElementById('site').value;
+    const optomVal = document.getElementById('optom_name').value;
+    document.querySelectorAll('input[type="text"], input[type="number"], input[type="tel"]').forEach(i => i.value = '');
+    document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+    document.querySelectorAll('input[value="Normal"], input[value="Straight Eyes"]').forEach(c => c.checked = true);
+    document.getElementById('site').value = siteVal;
+    document.getElementById('optom_name').value = optomVal;
+    document.getElementById('examDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('lookupUID').value = '';
+    document.getElementById('syncFeedback').textContent = 'Ready for new patient';
   }
 </script>
 </body>
