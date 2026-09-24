@@ -1,308 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zamindar Eye Camp - Real-Time Multi-Station</title>
-
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#1e3a8a" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
-
-  <style>
-    :root {
-      --primary: #1e3a8a;
-      --secondary: #0284c7;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #0f172a;
-      --border: #cbd5e1;
-      --danger: #dc2626;
-      --success: #16a34a;
-    }
-    * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 12px; }
-    .container { max-width: 820px; margin: 0 auto; background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-    .header { text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 12px; margin-bottom: 16px; }
-    .header h2 { margin: 0; color: var(--primary); font-size: 1.3rem; }
-    .header h4 { margin: 4px 0 0 0; color: #475569; font-weight: normal; font-size: 0.95rem; }
-    
-    .status-bar { display: flex; justify-content: space-between; align-items: center; background: #e2e8f0; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; font-size: 0.85rem; font-weight: 600; }
-    .online { color: var(--success); }
-    .offline { color: var(--danger); }
-    
-    .toggle-bar { display: flex; gap: 8px; margin-bottom: 16px; }
-    .toggle-btn { flex: 1; padding: 10px; font-size: 0.95rem; font-weight: bold; border: 2px solid var(--primary); border-radius: 6px; cursor: pointer; background: white; color: var(--primary); }
-    .toggle-btn.active { background: var(--primary); color: white; }
-
-    /* Lookup Toolbar */
-    .lookup-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 12px; margin-bottom: 16px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .lookup-input { flex: 1; min-width: 180px; padding: 9px; border: 1px solid var(--border); border-radius: 4px; font-weight: bold; }
-
-    fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-bottom: 18px; position: relative; }
-    legend { font-weight: bold; color: var(--primary); padding: 0 6px; font-size: 0.95rem; }
-
-    .section-save-btn { margin-top: 12px; width: 100%; padding: 10px; background: var(--secondary); color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-    .section-save-btn:hover { background: #0369a1; }
-    .section-save-btn.saved { background: var(--success); }
-
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
-    @media (max-width: 600px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
-
-    .form-group { margin-bottom: 8px; }
-    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #334155; }
-    input[type="text"], input[type="number"], input[type="tel"], input[type="date"], select {
-      width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem;
-    }
-    .check-group { display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: 0.85rem; margin-top: 4px; }
-    .check-item { display: flex; align-items: center; gap: 5px; cursor: pointer; }
-    .check-box-panel { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
-    .sub-heading { font-weight: 600; font-size: 0.85rem; color: #1e293b; margin-bottom: 6px; display: block; }
-    .pass-refer { display: flex; gap: 15px; background: #f8fafc; padding: 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 8px; }
-
-    .btn { padding: 9px 14px; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-    .btn-search { background: var(--primary); color: white; }
-    .btn-new { background: #64748b; color: white; }
-
-    .app-footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 0.85rem; color: #64748b; }
-  </style>
-</head>
-<body>
-
-<div class="container">
-  <div class="header">
-    <h2>ZAMINDAR MICROSURGICAL EYE CENTRE</h2>
-    <h4 id="formHeaderTitle">Community Outreach Eye Screening (Real-Time Stations)</h4>
-  </div>
-
-  <div class="status-bar">
-    <div id="netStatus" class="online">● Online</div>
-    <div id="syncFeedback">Ready</div>
-  </div>
-
-  <!-- Real-Time Patient Lookup -->
-  <div class="lookup-card">
-    <input type="text" id="lookupUID" class="lookup-input" placeholder="Enter Unique ID (e.g. ZMEC-001)" />
-    <button type="button" class="btn btn-search" onclick="fetchPatientByUID()">🔍 Load Patient</button>
-    <button type="button" class="btn btn-new" onclick="startNewPatient()">➕ Clear / New</button>
-  </div>
-
-  <div class="toggle-bar">
-    <button type="button" id="tabAdult" class="toggle-btn active" onclick="setFormMode('Adult')">👤 Adults Form</button>
-    <button type="button" id="tabChild" class="toggle-btn" onclick="setFormMode('Child')">🧒 Children Form</button>
-  </div>
-  <input type="hidden" id="form_type" value="Adult" />
-
-  <!-- Section 1: Registration -->
-  <fieldset id="sec1">
-    <legend>Station 1: Registration & Demographics</legend>
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Screening Site *</label>
-        <input type="text" id="site" required placeholder="Location" />
-      </div>
-      <div class="form-group">
-        <label>Unique ID *</label>
-        <input type="text" id="uid" required placeholder="ZMEC-2026-001" onchange="syncLookupField(this.value)" />
-      </div>
-    </div>
-    <div class="grid-4">
-      <div class="form-group">
-        <label>Patient Name *</label>
-        <input type="text" id="name" required />
-      </div>
-      <div class="form-group">
-        <label>Age *</label>
-        <input type="number" id="age" min="1" max="120" required onchange="handleAgeAutoSwitch(this.value)" />
-      </div>
-      <div class="form-group">
-        <label>Gender *</label>
-        <select id="gender">
-          <option value="">Select</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Exam Date</label>
-        <input type="date" id="examDate" required />
-      </div>
-    </div>
-    <div class="grid-2">
-      <div class="form-group">
-        <label>Phone Number</label>
-        <input type="tel" id="phone" />
-      </div>
-      <div class="form-group" id="schoolClassGroup" style="display: none;">
-        <label>School Name / Class (Children)</label>
-        <input type="text" id="school_class" />
-      </div>
-    </div>
-    <button type="button" class="section-save-btn" onclick="saveSection(1)">💾 Save Station 1 Data</button>
-  </fieldset>
-
-  <!-- Section 2: Medical History -->
-  <fieldset id="sec2">
-    <legend>Station 2: Medical History</legend>
-    <span class="sub-heading">Blurred Vision:</span>
-    <div class="check-group" style="margin-bottom: 8px;">
-      <label class="check-item"><input type="checkbox" name="blurred" value="Distance"> Distance</label>
-      <label class="check-item"><input type="checkbox" name="blurred" value="Near"> Near</label>
-      <label class="check-item"><input type="checkbox" name="blurred" value="Both"> Both</label>
-    </div>
-
-    <span class="sub-heading">General & Ocular Conditions:</span>
-    <div class="check-group">
-      <label class="check-item"><input type="checkbox" id="h_pain"> Eye with pain</label>
-      <label class="check-item"><input type="checkbox" id="h_spectacles"> Wears spectacles</label>
-      <label class="check-item"><input type="checkbox" id="h_meds"> Uses eye drops</label>
-      <label class="check-item"><input type="checkbox" id="h_surgery"> Eye surgery history</label>
-      <span id="adultHistoryGroup" style="display: contents;">
-        <label class="check-item"><input type="checkbox" id="h_diabetes"> Diabetes</label>
-        <label class="check-item"><input type="checkbox" id="h_hypertension"> Hypertension</label>
-      </span>
-      <span id="childHistoryGroup" style="display: none;">
-        <label class="check-item"><input type="checkbox" id="h_squint"> Squint / lazy eye</label>
-        <label class="check-item"><input type="checkbox" id="h_headache"> Headaches reading</label>
-      </span>
-    </div>
-
-    <div class="pass-refer">
-      <label><strong>History Outcome:</strong></label>
-      <label><input type="radio" name="history_res" value="Pass" checked> Pass</label>
-      <label><input type="radio" name="history_res" value="Refer"> Refer</label>
-    </div>
-    <button type="button" class="section-save-btn" onclick="saveSection(2)">💾 Save Station 2 Data</button>
-  </fieldset>
-
-  <!-- Section 3: Visual Acuity -->
-  <fieldset id="sec3">
-    <legend>Station 3: Visual Acuity</legend>
-    <span class="sub-heading">Distance Visual Acuity</span>
-    <div class="grid-3">
-      <div class="form-group">
-        <label>Condition</label>
-        <select id="dist_cond"><option value="Without spectacles">Without spectacles</option><option value="With spectacles">With spectacles</option></select>
-      </div>
-      <div class="form-group"><label>Right Eye (RE)</label><input type="text" id="dist_re" placeholder="6/6" /></div>
-      <div class="form-group"><label>Left Eye (LE)</label><input type="text" id="dist_le" placeholder="6/6" /></div>
-    </div>
-    <div class="pass-refer">
-      <label><strong>Distance VA Outcome:</strong></label>
-      <label><input type="radio" name="dist_res" value="Pass" checked> Pass</label>
-      <label><input type="radio" name="dist_res" value="Refer"> Refer</label>
-    </div>
-
-    <div id="nearVisionContainer">
-      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 12px 0;">
-      <span class="sub-heading">Near Visual Acuity (Adults)</span>
-      <div class="grid-3">
-        <div class="form-group">
-          <label>Condition</label>
-          <select id="near_cond"><option value="Without spectacles">Without spectacles</option><option value="With spectacles">With spectacles</option></select>
-        </div>
-        <div class="form-group"><label>Right Eye (RE)</label><input type="text" id="near_re" placeholder="N6" /></div>
-        <div class="form-group"><label>Left Eye (LE)</label><input type="text" id="near_le" placeholder="N6" /></div>
-      </div>
-      <div class="pass-refer">
-        <label><strong>Near VA Outcome:</strong></label>
-        <label><input type="radio" name="near_res" value="Pass" checked> Pass</label>
-        <label><input type="radio" name="near_res" value="Refer"> Refer</label>
-      </div>
-    </div>
-    <button type="button" class="section-save-btn" onclick="saveSection(3)">💾 Save Station 3 Data</button>
-  </fieldset>
-
-  <!-- Section 4: External Eye Exam & Referral -->
-  <fieldset id="sec4">
-    <legend>Station 4: Basic External Eye Exam & Sign-Off</legend>
-    <div class="check-box-panel">
-      <span class="sub-heading">Alignment:</span>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" name="ext_align" value="Straight Eyes" checked> Straight Eyes</label>
-        <label class="check-item"><input type="checkbox" name="ext_align" value="Mis-aligned Eyes"> Mis-aligned Eyes</label>
-      </div>
-    </div>
-
-    <div class="check-box-panel">
-      <span class="sub-heading">Globe:</span>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" name="ext_globe" value="Normal" checked> Normal</label>
-        <label class="check-item"><input type="checkbox" name="ext_globe" value="Anterior Displacement"> Anterior Displacement</label>
-        <label class="check-item"><input type="checkbox" name="ext_globe" value="Posterior Displacement"> Posterior Displacement</label>
-        <label class="check-item"><input type="checkbox" name="ext_globe" value="Other"> Other</label>
-      </div>
-    </div>
-
-    <div class="check-box-panel">
-      <span class="sub-heading">Eyelids & Lashes:</span>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" name="ext_lids" value="Normal" checked> Normal</label>
-        <label class="check-item"><input type="checkbox" name="ext_lids" value="Swelling"> Swelling</label>
-        <label class="check-item"><input type="checkbox" name="ext_lids" value="Drooping"> Drooping</label>
-        <label class="check-item"><input type="checkbox" name="ext_lids" value="Discharge/Crusts"> Discharge/Crusts</label>
-        <label class="check-item"><input type="checkbox" name="ext_lids" value="Turned Inward"> Turned Inward</label>
-        <label class="check-item"><input type="checkbox" name="ext_lids" value="Abnormal Lid Closure"> Abnormal Lid Closure</label>
-        <label class="check-item"><input type="checkbox" name="ext_lids" value="Other"> Other</label>
-      </div>
-    </div>
-
-    <div class="check-box-panel">
-      <span class="sub-heading">White part (Conjunctiva/Sclera):</span>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" name="ext_white" value="Normal" checked> Normal</label>
-        <label class="check-item"><input type="checkbox" name="ext_white" value="Redness"> Redness</label>
-        <label class="check-item"><input type="checkbox" name="ext_white" value="Foreign Body"> Foreign Body</label>
-        <label class="check-item"><input type="checkbox" name="ext_white" value="Other"> Other</label>
-      </div>
-    </div>
-
-    <div class="check-box-panel">
-      <span class="sub-heading">Black part (Cornea/Pupil/Lens):</span>
-      <div class="check-group">
-        <label class="check-item"><input type="checkbox" name="ext_black" value="Normal" checked> Normal</label>
-        <label class="check-item"><input type="checkbox" name="ext_black" value="White/Grey/Hazy"> White/Grey/Hazy</label>
-        <label class="check-item"><input type="checkbox" name="ext_black" value="Abnormal Shape"> Abnormal Shape</label>
-        <label class="check-item"><input type="checkbox" name="ext_black" value="Other"> Other</label>
-      </div>
-    </div>
-
-    <div class="pass-refer">
-      <label><strong>External Exam Outcome:</strong></label>
-      <label><input type="radio" name="ext_res" value="Pass" checked> Pass</label>
-      <label><input type="radio" name="ext_res" value="Refer"> Refer</label>
-    </div>
-
-    <div class="grid-2" style="margin-top: 10px;">
-      <div class="form-group">
-        <label>Referred to ZMEC Eye Hospital?</label>
-        <select id="referred_zmec"><option value="No">No</option><option value="Yes">Yes</option></select>
-      </div>
-      <div class="form-group">
-        <label>Optometrist Name *</label>
-        <input type="text" id="optom_name" placeholder="Optometrist Name/ID" />
-      </div>
-    </div>
-    <button type="button" class="section-save-btn" onclick="saveSection(4)">💾 Save Station 4 Data</button>
-  </fieldset>
-
-  <footer class="app-footer">
-    Developed by <strong>Navadhi Cognitech</strong>
-  </footer>
-</div>
-
 <script>
-  // >>> REPLACE WITH YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL <<<
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0_4Z__8t4xCU-N6-40ozT1LdIPd7sZbdGYmKxl4IlhG-uZ96MTpJjP3ENSYqEMnjD/exec";
 
+  // Set today's date by default
   document.getElementById('examDate').value = new Date().toISOString().split('T')[0];
 
+  // Helper functions
   function syncLookupField(val) {
-    document.getElementById('lookupUID').value = val;
+    document.getElementById('lookupUID').value = val.trim();
   }
 
   function getCheckedValues(name) {
@@ -311,12 +15,28 @@
   }
 
   function setCheckedValues(name, joinedStr) {
-    if (!joinedStr) return;
+    document.querySelectorAll(`input[name="${name}"]`).forEach(cb => cb.checked = false);
+    if (!joinedStr || joinedStr === 'None') return;
     const items = joinedStr.split(';').map(s => s.trim());
     document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
       cb.checked = items.includes(cb.value);
     });
   }
+
+  // Network Watcher
+  function updateNetworkIndicator() {
+    const el = document.getElementById('netStatus');
+    if (navigator.onLine) {
+      el.textContent = '● Online';
+      el.className = 'online';
+    } else {
+      el.textContent = '● Offline';
+      el.className = 'offline';
+    }
+  }
+  window.addEventListener('online', updateNetworkIndicator);
+  window.addEventListener('offline', updateNetworkIndicator);
+  updateNetworkIndicator();
 
   // 1. Form Mode Toggle (Adult / Child)
   function setFormMode(mode) {
@@ -333,7 +53,7 @@
   }
 
   function handleAgeAutoSwitch(ageVal) {
-    const age = parseInt(ageVal);
+    const age = parseInt(ageVal, 10);
     if (!isNaN(age)) {
       if (age < 16 && document.getElementById('form_type').value === 'Adult') {
         setFormMode('Child');
@@ -374,9 +94,13 @@
         document.getElementById('name').value = p.name || '';
         document.getElementById('age').value = p.age || '';
         document.getElementById('gender').value = p.gender || '';
-        if (p.examDate) document.getElementById('examDate').value = p.examDate.substring(0, 10);
-        document.getElementById('phone').value = p.phone || '';
-        document.getElementById('school_class').value = p.school_class || '';
+        if (p.examDate) {
+          // Normalizes ISO format or standard date strings
+          const d = new Date(p.examDate);
+          document.getElementById('examDate').value = !isNaN(d) ? d.toISOString().split('T')[0] : p.examDate.substring(0, 10);
+        }
+        document.getElementById('phone').value = p.phone !== 'N/A' ? (p.phone || '') : '';
+        document.getElementById('school_class').value = p.school_class !== 'N/A' ? (p.school_class || '') : '';
 
         // Populate Station 2
         setCheckedValues('blurred', p.blurred_vision);
@@ -420,26 +144,40 @@
           if (r) r.checked = true;
         }
         document.getElementById('referred_zmec').value = p.referred_zmec || 'No';
-        document.getElementById('optom_name').value = p.optometrist || '';
+        document.getElementById('optom_name').value = p.optometrist !== 'N/A' ? (p.optometrist || '') : '';
 
         feedback.textContent = `✅ Loaded: ${p.name || uid}`;
       } else {
-        alert("Patient UID not found in Google Sheet. Check the ID or register them at Station 1.");
+        alert(`Patient "${uid}" not found. Verify the ID or register them at Station 1.`);
         feedback.textContent = "UID Not Found";
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to connect to Google Sheet. Check internet connection.");
+      alert("Failed to connect to Google Sheet. Please check device connectivity.");
       feedback.textContent = "Fetch Failed";
     }
   }
 
-  // 3. Save Specific Section to Google Sheet
+  // 3. Save Specific Station Data to Google Sheet
   async function saveSection(sectionNumber) {
-    const uid = document.getElementById('uid').value.trim();
+    const uidInput = document.getElementById('uid');
+    const uid = uidInput.value.trim();
+
     if (!uid) {
       alert("Please enter a Unique ID in Station 1 before saving.");
+      uidInput.focus();
       return;
+    }
+
+    // Client-side validation for Station 1 registration
+    if (sectionNumber === 1) {
+      const site = document.getElementById('site').value.trim();
+      const name = document.getElementById('name').value.trim();
+      const age = document.getElementById('age').value.trim();
+      if (!site || !name || !age) {
+        alert("Please complete Site, Name, and Age before saving Station 1.");
+        return;
+      }
     }
 
     const mode = document.getElementById('form_type').value;
@@ -454,13 +192,13 @@
     };
 
     if (sectionNumber === 1) {
-      payloadRecord.site = document.getElementById('site').value;
-      payloadRecord.name = document.getElementById('name').value;
-      payloadRecord.age = document.getElementById('age').value;
+      payloadRecord.site = document.getElementById('site').value.trim();
+      payloadRecord.name = document.getElementById('name').value.trim();
+      payloadRecord.age = document.getElementById('age').value.trim();
       payloadRecord.gender = document.getElementById('gender').value;
       payloadRecord.examDate = document.getElementById('examDate').value;
-      payloadRecord.phone = document.getElementById('phone').value || 'N/A';
-      payloadRecord.school_class = document.getElementById('school_class').value || 'N/A';
+      payloadRecord.phone = document.getElementById('phone').value.trim() || 'N/A';
+      payloadRecord.school_class = document.getElementById('school_class').value.trim() || 'N/A';
     } else if (sectionNumber === 2) {
       payloadRecord.blurred_vision = getCheckedValues('blurred');
       payloadRecord.eye_pain = document.getElementById('h_pain').checked ? 'Yes' : 'No';
@@ -474,12 +212,12 @@
       payloadRecord.history_outcome = document.querySelector('input[name="history_res"]:checked').value;
     } else if (sectionNumber === 3) {
       payloadRecord.dist_condition = document.getElementById('dist_cond').value;
-      payloadRecord.dist_re = document.getElementById('dist_re').value || 'N/A';
-      payloadRecord.dist_le = document.getElementById('dist_le').value || 'N/A';
+      payloadRecord.dist_re = document.getElementById('dist_re').value.trim() || 'N/A';
+      payloadRecord.dist_le = document.getElementById('dist_le').value.trim() || 'N/A';
       payloadRecord.dist_outcome = document.querySelector('input[name="dist_res"]:checked').value;
       payloadRecord.near_condition = mode === 'Adult' ? document.getElementById('near_cond').value : 'N/A';
-      payloadRecord.near_re = mode === 'Adult' ? (document.getElementById('near_re').value || 'N/A') : 'N/A';
-      payloadRecord.near_le = mode === 'Adult' ? (document.getElementById('near_le').value || 'N/A') : 'N/A';
+      payloadRecord.near_re = mode === 'Adult' ? (document.getElementById('near_re').value.trim() || 'N/A') : 'N/A';
+      payloadRecord.near_le = mode === 'Adult' ? (document.getElementById('near_le').value.trim() || 'N/A') : 'N/A';
       payloadRecord.near_outcome = mode === 'Adult' ? document.querySelector('input[name="near_res"]:checked').value : 'N/A';
     } else if (sectionNumber === 4) {
       payloadRecord.ext_alignment = getCheckedValues('ext_align');
@@ -489,7 +227,7 @@
       payloadRecord.ext_black_cornea = getCheckedValues('ext_black');
       payloadRecord.ext_outcome = document.querySelector('input[name="ext_res"]:checked').value;
       payloadRecord.referred_zmec = document.getElementById('referred_zmec').value;
-      payloadRecord.optometrist = document.getElementById('optom_name').value || 'N/A';
+      payloadRecord.optometrist = document.getElementById('optom_name').value.trim() || 'N/A';
     }
 
     try {
@@ -504,31 +242,48 @@
       if (res.status === 'success') {
         btn.textContent = `✅ Station ${sectionNumber} Saved & Synced!`;
         btn.className = "section-save-btn saved";
-        document.getElementById('syncFeedback').textContent = `● Last Synced UID: ${uid} (Sec ${sectionNumber})`;
+        document.getElementById('syncFeedback').textContent = `● Synced UID: ${uid} (Station ${sectionNumber})`;
+        
+        // Ensure top lookup field matches current UID
+        syncLookupField(uid);
+
         setTimeout(() => {
           btn.textContent = originalText;
           btn.className = "section-save-btn";
           btn.disabled = false;
-        }, 2500);
+        }, 2200);
       } else {
-        alert("Save failed: " + res.message);
+        alert("Google Sheet returned an error: " + res.message);
         btn.textContent = originalText;
         btn.disabled = false;
       }
     } catch (err) {
       console.error(err);
-      alert("Network Error: Could not reach Google Sheets. Check your internet connection.");
+      alert("Network Error: Could not reach Google Sheets. Please verify the device's internet connection.");
       btn.textContent = originalText;
       btn.disabled = false;
     }
   }
 
+  // 4. Reset Form for New Patient
   function startNewPatient() {
     const siteVal = document.getElementById('site').value;
     const optomVal = document.getElementById('optom_name').value;
+    
+    // Clear textual inputs
     document.querySelectorAll('input[type="text"], input[type="number"], input[type="tel"]').forEach(i => i.value = '');
+    
+    // Uncheck general checkboxes
     document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+    
+    // Reset standard clinical baseline defaults
     document.querySelectorAll('input[value="Normal"], input[value="Straight Eyes"]').forEach(c => c.checked = true);
+    document.querySelectorAll('input[value="Pass"]').forEach(r => r.checked = true);
+    document.getElementById('dist_cond').value = 'Without spectacles';
+    document.getElementById('near_cond').value = 'Without spectacles';
+    document.getElementById('referred_zmec').value = 'No';
+
+    // Retain site and staff credentials for rapid workflow
     document.getElementById('site').value = siteVal;
     document.getElementById('optom_name').value = optomVal;
     document.getElementById('examDate').value = new Date().toISOString().split('T')[0];
@@ -536,5 +291,3 @@
     document.getElementById('syncFeedback').textContent = 'Ready for new patient';
   }
 </script>
-</body>
-</html>
