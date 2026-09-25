@@ -369,7 +369,7 @@
     }
   }
 
-  // Real-Time Patient Fetch from Google Sheet
+  // Real-Time Patient Fetch from Google Sheet (GET-based for zero CORS/redirect failure)
   async function fetchPatientByUID() {
     const uid = document.getElementById('lookupUID').value.trim();
     if (!uid) {
@@ -381,10 +381,9 @@
     feedback.textContent = "⏳ Fetching patient from cloud...";
 
     try {
-      const resp = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: "fetch_patient", uid: uid }),
+      const fetchUrl = `${APPS_SCRIPT_URL}?uid=${encodeURIComponent(uid)}`;
+      const resp = await fetch(fetchUrl, {
+        method: 'GET',
         redirect: 'follow'
       });
 
