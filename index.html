@@ -1,9 +1,6 @@
 <script>
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0_4Z__8t4xCU-N6-40ozT1LdIPd7sZbdGYmKxl4IlhG-uZ96MTpJjP3ENSYqEMnjD/exec";
 
-  // Set today's date by default
-  document.getElementById('examDate').value = new Date().toISOString().split('T')[0];
-
   // Helper functions
   function syncLookupField(val) {
     document.getElementById('lookupUID').value = val.trim();
@@ -26,6 +23,7 @@
   // Network Watcher
   function updateNetworkIndicator() {
     const el = document.getElementById('netStatus');
+    if (!el) return;
     if (navigator.onLine) {
       el.textContent = '● Online';
       el.className = 'online';
@@ -36,7 +34,6 @@
   }
   window.addEventListener('online', updateNetworkIndicator);
   window.addEventListener('offline', updateNetworkIndicator);
-  updateNetworkIndicator();
 
   // 1. Form Mode Toggle (Adult / Child)
   function setFormMode(mode) {
@@ -95,7 +92,6 @@
         document.getElementById('age').value = p.age || '';
         document.getElementById('gender').value = p.gender || '';
         if (p.examDate) {
-          // Normalizes ISO format or standard date strings
           const d = new Date(p.examDate);
           document.getElementById('examDate').value = !isNaN(d) ? d.toISOString().split('T')[0] : p.examDate.substring(0, 10);
         }
@@ -169,7 +165,6 @@
       return;
     }
 
-    // Client-side validation for Station 1 registration
     if (sectionNumber === 1) {
       const site = document.getElementById('site').value.trim();
       const name = document.getElementById('name').value.trim();
@@ -244,7 +239,6 @@
         btn.className = "section-save-btn saved";
         document.getElementById('syncFeedback').textContent = `● Synced UID: ${uid} (Station ${sectionNumber})`;
         
-        // Ensure top lookup field matches current UID
         syncLookupField(uid);
 
         setTimeout(() => {
@@ -270,26 +264,35 @@
     const siteVal = document.getElementById('site').value;
     const optomVal = document.getElementById('optom_name').value;
     
-    // Clear textual inputs
     document.querySelectorAll('input[type="text"], input[type="number"], input[type="tel"]').forEach(i => i.value = '');
-    
-    // Uncheck general checkboxes
     document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
-    
-    // Reset standard clinical baseline defaults
     document.querySelectorAll('input[value="Normal"], input[value="Straight Eyes"]').forEach(c => c.checked = true);
     document.querySelectorAll('input[value="Pass"]').forEach(r => r.checked = true);
     document.getElementById('dist_cond').value = 'Without spectacles';
     document.getElementById('near_cond').value = 'Without spectacles';
     document.getElementById('referred_zmec').value = 'No';
 
-    // Retain site and staff credentials for rapid workflow
     document.getElementById('site').value = siteVal;
     document.getElementById('optom_name').value = optomVal;
-    document.getElementById('examDate').value = new Date().toISOString().split('T')[0];
+    
+    const examDateEl = document.getElementById('examDate');
+    if (examDateEl) examDateEl.value = new Date().toISOString().split('T')[0];
+    
     document.getElementById('lookupUID').value = '';
     document.getElementById('syncFeedback').textContent = 'Ready for new patient';
-    // 5. Register Service Worker for PWA and Offline Support
+  }
+
+  // 5. DOM Initialization & Service Worker Registration
+  document.addEventListener('DOMContentLoaded', () => {
+    // Safely set date once DOM exists
+    const examDateEl = document.getElementById('examDate');
+    if (examDateEl) {
+      examDateEl.value = new Date().toISOString().split('T')[0];
+    }
+    updateNetworkIndicator();
+  });
+
+  // Register Service Worker at top level on page load
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js', { scope: './' })
@@ -299,6 +302,5 @@
         })
         .catch((err) => console.error('SW Registration Failed:', err));
     });
-  }
   }
 </script>
