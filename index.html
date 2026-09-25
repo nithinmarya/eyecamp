@@ -9,329 +9,599 @@
   <meta name="theme-color" content="#1e3a8a" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="apple-touch-icon" href="icon-192.png" />
 
   <style>
-    /* CSS Styles Here */
+    :root {
+      --primary: #1e3a8a;
+      --secondary: #0284c7;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --border: #cbd5e1;
+      --danger: #dc2626;
+      --success: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 12px; }
+    .container { max-width: 820px; margin: 0 auto; background: var(--card-bg); border-radius: 8px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .header { text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 12px; margin-bottom: 16px; }
+    .header h2 { margin: 0; color: var(--primary); font-size: 1.3rem; }
+    .header h4 { margin: 4px 0 0 0; color: #475569; font-weight: normal; font-size: 0.95rem; }
+    
+    .status-bar { display: flex; justify-content: space-between; align-items: center; background: #e2e8f0; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; font-size: 0.85rem; font-weight: 600; }
+    .online { color: var(--success); }
+    .offline { color: var(--danger); }
+    
+    .toggle-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+    .toggle-btn { flex: 1; padding: 10px; font-size: 0.95rem; font-weight: bold; border: 2px solid var(--primary); border-radius: 6px; cursor: pointer; background: white; color: var(--primary); }
+    .toggle-btn.active { background: var(--primary); color: white; }
+
+    /* Lookup Toolbar */
+    .lookup-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 12px; margin-bottom: 16px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .lookup-input { flex: 1; min-width: 180px; padding: 9px; border: 1px solid var(--border); border-radius: 4px; font-weight: bold; font-size: 0.95rem; }
+
+    fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-bottom: 18px; position: relative; }
+    legend { font-weight: bold; color: var(--primary); padding: 0 6px; font-size: 0.95rem; }
+
+    .section-save-btn { margin-top: 12px; width: 100%; padding: 10px; background: var(--secondary); color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
+    .section-save-btn:hover { background: #0369a1; }
+    .section-save-btn.saved { background: var(--success); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+    @media (max-width: 600px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+    .form-group { margin-bottom: 8px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; color: #334155; }
+    input[type="text"], input[type="number"], input[type="tel"], input[type="date"], select {
+      width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem;
+    }
+    .check-group { display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: 0.85rem; margin-top: 4px; }
+    .check-item { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+    .check-box-panel { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
+    .sub-heading { font-weight: 600; font-size: 0.85rem; color: #1e293b; margin-bottom: 6px; display: block; }
+    .pass-refer { display: flex; gap: 15px; background: #f8fafc; padding: 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 8px; }
+
+    .btn { padding: 9px 14px; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .btn-search { background: var(--primary); color: white; }
+    .btn-new { background: #64748b; color: white; }
+
+    .app-footer { text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 0.85rem; color: #64748b; }
   </style>
-  <!-- DO NOT PUT THE FORM JAVASCRIPT HERE IN THE HEAD -->
 </head>
 <body>
 
-  <div class="container">
-    <!-- All Form HTML, Fieldsets, Stations, Inputs -->
-    ...
-    <footer class="app-footer">
-      Developed by <strong>Navadhi Cognitech</strong>
-    </footer>
+<div class="container">
+  <div class="header">
+    <h2>ZAMINDAR MICROSURGICAL EYE CENTRE</h2>
+    <h4 id="formHeaderTitle">Community Outreach Eye Screening (Real-Time Stations)</h4>
   </div>
 
-  <!-- PUT THE SCRIPT HERE AT THE VERY BOTTOM -->
-  <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0_4Z__8t4xCU-N6-40ozT1LdIPd7sZbdGYmKxl4IlhG-uZ96MTpJjP3ENSYqEMnjD/exec";
+  <div class="status-bar">
+    <div id="netStatus" class="online">● Online</div>
+    <div id="syncFeedback">Ready</div>
+  </div>
 
-    // 1. Safely initialize DOM values after elements are parsed
-    document.addEventListener('DOMContentLoaded', () => {
-      const examDateEl = document.getElementById('examDate');
-      if (examDateEl) {
-        examDateEl.value = new Date().toISOString().split('T')[0];
-      }
-      updateNetworkIndicator();
+  <!-- Real-Time Patient Lookup -->
+  <div class="lookup-card">
+    <input type="text" id="lookupUID" class="lookup-input" placeholder="Enter Unique ID (e.g. ZMEC-001)" />
+    <button type="button" class="btn btn-search" onclick="fetchPatientByUID()">🔍 Load Patient</button>
+    <button type="button" class="btn btn-new" onclick="startNewPatient()">➕ Clear / New</button>
+  </div>
+
+  <div class="toggle-bar">
+    <button type="button" id="tabAdult" class="toggle-btn active" onclick="setFormMode('Adult')">👤 Adults Form</button>
+    <button type="button" id="tabChild" class="toggle-btn" onclick="setFormMode('Child')">🧒 Children Form</button>
+  </div>
+  <input type="hidden" id="form_type" value="Adult" />
+
+  <!-- Section 1: Registration -->
+  <fieldset id="sec1">
+    <legend>Station 1: Registration & Demographics</legend>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Screening Site *</label>
+        <input type="text" id="site" required placeholder="Location" />
+      </div>
+      <div class="form-group">
+        <label>Unique ID *</label>
+        <input type="text" id="uid" required placeholder="ZMEC-2026-001" onchange="syncLookupField(this.value)" />
+      </div>
+    </div>
+    <div class="grid-4">
+      <div class="form-group">
+        <label>Patient Name *</label>
+        <input type="text" id="name" required />
+      </div>
+      <div class="form-group">
+        <label>Age *</label>
+        <input type="number" id="age" min="1" max="120" required onchange="handleAgeAutoSwitch(this.value)" />
+      </div>
+      <div class="form-group">
+        <label>Gender *</label>
+        <select id="gender">
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Exam Date</label>
+        <input type="date" id="examDate" required />
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="phone" />
+      </div>
+      <div class="form-group" id="schoolClassGroup" style="display: none;">
+        <label>School Name / Class (Children)</label>
+        <input type="text" id="school_class" />
+      </div>
+    </div>
+    <button type="button" class="section-save-btn" onclick="saveSection(1)">💾 Save Station 1 Data</button>
+  </fieldset>
+
+  <!-- Section 2: Medical History -->
+  <fieldset id="sec2">
+    <legend>Station 2: Medical History</legend>
+    <span class="sub-heading">Blurred Vision:</span>
+    <div class="check-group" style="margin-bottom: 8px;">
+      <label class="check-item"><input type="checkbox" name="blurred" value="Distance"> Distance</label>
+      <label class="check-item"><input type="checkbox" name="blurred" value="Near"> Near</label>
+      <label class="check-item"><input type="checkbox" name="blurred" value="Both"> Both</label>
+    </div>
+
+    <span class="sub-heading">General & Ocular Conditions:</span>
+    <div class="check-group">
+      <label class="check-item"><input type="checkbox" id="h_pain"> Eye with pain</label>
+      <label class="check-item"><input type="checkbox" id="h_spectacles"> Wears spectacles</label>
+      <label class="check-item"><input type="checkbox" id="h_meds"> Uses eye drops</label>
+      <label class="check-item"><input type="checkbox" id="h_surgery"> Eye surgery history</label>
+      <span id="adultHistoryGroup" style="display: contents;">
+        <label class="check-item"><input type="checkbox" id="h_diabetes"> Diabetes</label>
+        <label class="check-item"><input type="checkbox" id="h_hypertension"> Hypertension</label>
+      </span>
+      <span id="childHistoryGroup" style="display: none;">
+        <label class="check-item"><input type="checkbox" id="h_squint"> Squint / lazy eye</label>
+        <label class="check-item"><input type="checkbox" id="h_headache"> Headaches reading</label>
+      </span>
+    </div>
+
+    <div class="pass-refer">
+      <label><strong>History Outcome:</strong></label>
+      <label><input type="radio" name="history_res" value="Pass" checked> Pass</label>
+      <label><input type="radio" name="history_res" value="Refer"> Refer</label>
+    </div>
+    <button type="button" class="section-save-btn" onclick="saveSection(2)">💾 Save Station 2 Data</button>
+  </fieldset>
+
+  <!-- Section 3: Visual Acuity -->
+  <fieldset id="sec3">
+    <legend>Station 3: Visual Acuity</legend>
+    <span class="sub-heading">Distance Visual Acuity</span>
+    <div class="grid-3">
+      <div class="form-group">
+        <label>Condition</label>
+        <select id="dist_cond"><option value="Without spectacles">Without spectacles</option><option value="With spectacles">With spectacles</option></select>
+      </div>
+      <div class="form-group"><label>Right Eye (RE)</label><input type="text" id="dist_re" placeholder="6/6" /></div>
+      <div class="form-group"><label>Left Eye (LE)</label><input type="text" id="dist_le" placeholder="6/6" /></div>
+    </div>
+    <div class="pass-refer">
+      <label><strong>Distance VA Outcome:</strong></label>
+      <label><input type="radio" name="dist_res" value="Pass" checked> Pass</label>
+      <label><input type="radio" name="dist_res" value="Refer"> Refer</label>
+    </div>
+
+    <div id="nearVisionContainer">
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 12px 0;">
+      <span class="sub-heading">Near Visual Acuity (Adults)</span>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Condition</label>
+          <select id="near_cond"><option value="Without spectacles">Without spectacles</option><option value="With spectacles">With spectacles</option></select>
+        </div>
+        <div class="form-group"><label>Right Eye (RE)</label><input type="text" id="near_re" placeholder="N6" /></div>
+        <div class="form-group"><label>Left Eye (LE)</label><input type="text" id="near_le" placeholder="N6" /></div>
+      </div>
+      <div class="pass-refer">
+        <label><strong>Near VA Outcome:</strong></label>
+        <label><input type="radio" name="near_res" value="Pass" checked> Pass</label>
+        <label><input type="radio" name="near_res" value="Refer"> Refer</label>
+      </div>
+    </div>
+    <button type="button" class="section-save-btn" onclick="saveSection(3)">💾 Save Station 3 Data</button>
+  </fieldset>
+
+  <!-- Section 4: External Eye Exam & Referral -->
+  <fieldset id="sec4">
+    <legend>Station 4: Basic External Eye Exam & Sign-Off</legend>
+    <div class="check-box-panel">
+      <span class="sub-heading">Alignment:</span>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="ext_align" value="Straight Eyes" checked> Straight Eyes</label>
+        <label class="check-item"><input type="checkbox" name="ext_align" value="Mis-aligned Eyes"> Mis-aligned Eyes</label>
+      </div>
+    </div>
+
+    <div class="check-box-panel">
+      <span class="sub-heading">Globe:</span>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="ext_globe" value="Normal" checked> Normal</label>
+        <label class="check-item"><input type="checkbox" name="ext_globe" value="Anterior Displacement"> Anterior Displacement</label>
+        <label class="check-item"><input type="checkbox" name="ext_globe" value="Posterior Displacement"> Posterior Displacement</label>
+        <label class="check-item"><input type="checkbox" name="ext_globe" value="Other"> Other</label>
+      </div>
+    </div>
+
+    <div class="check-box-panel">
+      <span class="sub-heading">Eyelids & Lashes:</span>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Normal" checked> Normal</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Swelling"> Swelling</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Drooping"> Drooping</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Discharge/Crusts"> Discharge/Crusts</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Turned Inward"> Turned Inward</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Abnormal Lid Closure"> Abnormal Lid Closure</label>
+        <label class="check-item"><input type="checkbox" name="ext_lids" value="Other"> Other</label>
+      </div>
+    </div>
+
+    <div class="check-box-panel">
+      <span class="sub-heading">White part (Conjunctiva/Sclera):</span>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="ext_white" value="Normal" checked> Normal</label>
+        <label class="check-item"><input type="checkbox" name="ext_white" value="Redness"> Redness</label>
+        <label class="check-item"><input type="checkbox" name="ext_white" value="Foreign Body"> Foreign Body</label>
+        <label class="check-item"><input type="checkbox" name="ext_white" value="Other"> Other</label>
+      </div>
+    </div>
+
+    <div class="check-box-panel">
+      <span class="sub-heading">Black part (Cornea/Pupil/Lens):</span>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="ext_black" value="Normal" checked> Normal</label>
+        <label class="check-item"><input type="checkbox" name="ext_black" value="White/Grey/Hazy"> White/Grey/Hazy</label>
+        <label class="check-item"><input type="checkbox" name="ext_black" value="Abnormal Shape"> Abnormal Shape</label>
+        <label class="check-item"><input type="checkbox" name="ext_black" value="Other"> Other</label>
+      </div>
+    </div>
+
+    <div class="pass-refer">
+      <label><strong>External Exam Outcome:</strong></label>
+      <label><input type="radio" name="ext_res" value="Pass" checked> Pass</label>
+      <label><input type="radio" name="ext_res" value="Refer"> Refer</label>
+    </div>
+
+    <div class="grid-2" style="margin-top: 10px;">
+      <div class="form-group">
+        <label>Referred to ZMEC Eye Hospital?</label>
+        <select id="referred_zmec"><option value="No">No</option><option value="Yes">Yes</option></select>
+      </div>
+      <div class="form-group">
+        <label>Optometrist Name *</label>
+        <input type="text" id="optom_name" placeholder="Optometrist Name/ID" />
+      </div>
+    </div>
+    <button type="button" class="section-save-btn" onclick="saveSection(4)">💾 Save Station 4 Data</button>
+  </fieldset>
+
+  <footer class="app-footer">
+    Developed by <strong>Navadhi Cognitech</strong>
+  </footer>
+</div>
+
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0_4Z__8t4xCU-N6-40ozT1LdIPd7sZbdGYmKxl4IlhG-uZ96MTpJjP3ENSYqEMnjD/exec";
+
+  // 1. Safe DOM initialization on load
+  document.addEventListener('DOMContentLoaded', () => {
+    const examDateEl = document.getElementById('examDate');
+    if (examDateEl) {
+      examDateEl.value = new Date().toISOString().split('T')[0];
+    }
+    updateNetworkIndicator();
+  });
+
+  // Helper functions
+  function syncLookupField(val) {
+    const el = document.getElementById('lookupUID');
+    if (el) el.value = val.trim();
+  }
+
+  function getCheckedValues(name) {
+    const nodes = document.querySelectorAll(`input[name="${name}"]:checked`);
+    return Array.from(nodes).map(n => n.value).join('; ') || 'None';
+  }
+
+  function setCheckedValues(name, joinedStr) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(cb => cb.checked = false);
+    if (!joinedStr || joinedStr === 'None') return;
+    const items = joinedStr.split(';').map(s => s.trim());
+    document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
+      cb.checked = items.includes(cb.value);
     });
+  }
 
-    // Helper functions
-    function syncLookupField(val) {
-      const el = document.getElementById('lookupUID');
-      if (el) el.value = val.trim();
+  // Network Watcher
+  function updateNetworkIndicator() {
+    const el = document.getElementById('netStatus');
+    if (!el) return;
+    if (navigator.onLine) {
+      el.textContent = '● Online';
+      el.className = 'online';
+    } else {
+      el.textContent = '● Offline';
+      el.className = 'offline';
+    }
+  }
+  window.addEventListener('online', updateNetworkIndicator);
+  window.addEventListener('offline', updateNetworkIndicator);
+
+  // Form Mode Toggle (Adult / Child)
+  function setFormMode(mode) {
+    document.getElementById('form_type').value = mode;
+    const isAdult = (mode === 'Adult');
+
+    document.getElementById('tabAdult').className = 'toggle-btn' + (isAdult ? ' active' : '');
+    document.getElementById('tabChild').className = 'toggle-btn' + (!isAdult ? ' active' : '');
+
+    document.getElementById('adultHistoryGroup').style.display = isAdult ? 'contents' : 'none';
+    document.getElementById('childHistoryGroup').style.display = !isAdult ? 'contents' : 'none';
+    document.getElementById('nearVisionContainer').style.display = isAdult ? 'block' : 'none';
+    document.getElementById('schoolClassGroup').style.display = !isAdult ? 'block' : 'none';
+  }
+
+  function handleAgeAutoSwitch(ageVal) {
+    const age = parseInt(ageVal, 10);
+    if (!isNaN(age)) {
+      if (age < 16 && document.getElementById('form_type').value === 'Adult') {
+        setFormMode('Child');
+      } else if (age >= 16 && document.getElementById('form_type').value === 'Child') {
+        setFormMode('Adult');
+      }
+    }
+  }
+
+  // Real-Time Patient Fetch from Google Sheet
+  async function fetchPatientByUID() {
+    const uid = document.getElementById('lookupUID').value.trim();
+    if (!uid) {
+      alert("Please enter a Unique ID to search.");
+      return;
     }
 
-    function getCheckedValues(name) {
-      const nodes = document.querySelectorAll(`input[name="${name}"]:checked`);
-      return Array.from(nodes).map(n => n.value).join('; ') || 'None';
-    }
+    const feedback = document.getElementById('syncFeedback');
+    feedback.textContent = "⏳ Fetching patient from cloud...";
 
-    function setCheckedValues(name, joinedStr) {
-      document.querySelectorAll(`input[name="${name}"]`).forEach(cb => cb.checked = false);
-      if (!joinedStr || joinedStr === 'None') return;
-      const items = joinedStr.split(';').map(s => s.trim());
-      document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
-        cb.checked = items.includes(cb.value);
+    try {
+      const resp = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: "fetch_patient", uid: uid }),
+        redirect: 'follow'
       });
-    }
 
-    // Network Indicator
-    function updateNetworkIndicator() {
-      const el = document.getElementById('netStatus');
-      if (!el) return;
-      if (navigator.onLine) {
-        el.textContent = '● Online';
-        el.className = 'online';
+      const res = await resp.json();
+
+      if (res.status === "found") {
+        const p = res.patient;
+        setFormMode(p.form_type || 'Adult');
+
+        // Populate Station 1
+        document.getElementById('site').value = p.site || '';
+        document.getElementById('uid').value = p.uid || uid;
+        document.getElementById('name').value = p.name || '';
+        document.getElementById('age').value = p.age || '';
+        document.getElementById('gender').value = p.gender || '';
+        if (p.examDate) {
+          const d = new Date(p.examDate);
+          document.getElementById('examDate').value = !isNaN(d) ? d.toISOString().split('T')[0] : p.examDate.substring(0, 10);
+        }
+        document.getElementById('phone').value = p.phone !== 'N/A' ? (p.phone || '') : '';
+        document.getElementById('school_class').value = p.school_class !== 'N/A' ? (p.school_class || '') : '';
+
+        // Populate Station 2
+        setCheckedValues('blurred', p.blurred_vision);
+        document.getElementById('h_pain').checked = (p.eye_pain === 'Yes');
+        document.getElementById('h_spectacles').checked = (p.wears_spectacles === 'Yes');
+        document.getElementById('h_meds').checked = (p.uses_meds === 'Yes');
+        document.getElementById('h_surgery').checked = (p.surgery_history === 'Yes');
+        document.getElementById('h_diabetes').checked = (p.diabetes === 'Yes');
+        document.getElementById('h_hypertension').checked = (p.hypertension === 'Yes');
+        document.getElementById('h_squint').checked = (p.squint_lazy_eye === 'Yes');
+        document.getElementById('h_headache').checked = (p.headaches_reading === 'Yes');
+        if (p.history_outcome) {
+          const r = document.querySelector(`input[name="history_res"][value="${p.history_outcome}"]`);
+          if (r) r.checked = true;
+        }
+
+        // Populate Station 3
+        document.getElementById('dist_cond').value = p.dist_condition || 'Without spectacles';
+        document.getElementById('dist_re').value = (p.dist_re !== 'N/A' ? p.dist_re : '') || '';
+        document.getElementById('dist_le').value = (p.dist_le !== 'N/A' ? p.dist_le : '') || '';
+        if (p.dist_outcome) {
+          const r = document.querySelector(`input[name="dist_res"][value="${p.dist_outcome}"]`);
+          if (r) r.checked = true;
+        }
+        document.getElementById('near_cond').value = p.near_condition || 'Without spectacles';
+        document.getElementById('near_re').value = (p.near_re !== 'N/A' ? p.near_re : '') || '';
+        document.getElementById('near_le').value = (p.near_le !== 'N/A' ? p.near_le : '') || '';
+        if (p.near_outcome) {
+          const r = document.querySelector(`input[name="near_res"][value="${p.near_outcome}"]`);
+          if (r) r.checked = true;
+        }
+
+        // Populate Station 4
+        setCheckedValues('ext_align', p.ext_alignment);
+        setCheckedValues('ext_globe', p.ext_globe);
+        setCheckedValues('ext_lids', p.ext_eyelids_lashes);
+        setCheckedValues('ext_white', p.ext_white_conjunctiva);
+        setCheckedValues('ext_black', p.ext_black_cornea);
+        if (p.ext_outcome) {
+          const r = document.querySelector(`input[name="ext_res"][value="${p.ext_outcome}"]`);
+          if (r) r.checked = true;
+        }
+        document.getElementById('referred_zmec').value = p.referred_zmec || 'No';
+        document.getElementById('optom_name').value = p.optometrist !== 'N/A' ? (p.optometrist || '') : '';
+
+        feedback.textContent = `✅ Loaded: ${p.name || uid}`;
       } else {
-        el.textContent = '● Offline';
-        el.className = 'offline';
+        alert(`Patient "${uid}" not found. Verify the ID or register them at Station 1.`);
+        feedback.textContent = "UID Not Found";
       }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to connect to Google Sheet. Please check device connectivity.");
+      feedback.textContent = "Fetch Failed";
     }
-    window.addEventListener('online', updateNetworkIndicator);
-    window.addEventListener('offline', updateNetworkIndicator);
+  }
 
-    // Form Mode Toggle (Adult / Child)
-    function setFormMode(mode) {
-      document.getElementById('form_type').value = mode;
-      const isAdult = (mode === 'Adult');
+  // Save Station Data to Google Sheet
+  async function saveSection(sectionNumber) {
+    const uidInput = document.getElementById('uid');
+    const uid = uidInput.value.trim();
 
-      document.getElementById('tabAdult').className = 'toggle-btn' + (isAdult ? ' active' : '');
-      document.getElementById('tabChild').className = 'toggle-btn' + (!isAdult ? ' active' : '');
-
-      document.getElementById('adultHistoryGroup').style.display = isAdult ? 'contents' : 'none';
-      document.getElementById('childHistoryGroup').style.display = !isAdult ? 'contents' : 'none';
-      document.getElementById('nearVisionContainer').style.display = isAdult ? 'block' : 'none';
-      document.getElementById('schoolClassGroup').style.display = !isAdult ? 'block' : 'none';
-    }
-
-    function handleAgeAutoSwitch(ageVal) {
-      const age = parseInt(ageVal, 10);
-      if (!isNaN(age)) {
-        if (age < 16 && document.getElementById('form_type').value === 'Adult') {
-          setFormMode('Child');
-        } else if (age >= 16 && document.getElementById('form_type').value === 'Child') {
-          setFormMode('Adult');
-        }
-      }
+    if (!uid) {
+      alert("Please enter a Unique ID in Station 1 before saving.");
+      uidInput.focus();
+      return;
     }
 
-    // Patient Fetch
-    async function fetchPatientByUID() {
-      const uid = document.getElementById('lookupUID').value.trim();
-      if (!uid) {
-        alert("Please enter a Unique ID to search.");
+    if (sectionNumber === 1) {
+      const site = document.getElementById('site').value.trim();
+      const name = document.getElementById('name').value.trim();
+      const age = document.getElementById('age').value.trim();
+      if (!site || !name || !age) {
+        alert("Please complete Site, Name, and Age before saving Station 1.");
         return;
       }
-
-      const feedback = document.getElementById('syncFeedback');
-      feedback.textContent = "⏳ Fetching patient from cloud...";
-
-      try {
-        const resp = await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: "fetch_patient", uid: uid }),
-          redirect: 'follow'
-        });
-
-        const res = await resp.json();
-
-        if (res.status === "found") {
-          const p = res.patient;
-          setFormMode(p.form_type || 'Adult');
-
-          // Station 1
-          document.getElementById('site').value = p.site || '';
-          document.getElementById('uid').value = p.uid || uid;
-          document.getElementById('name').value = p.name || '';
-          document.getElementById('age').value = p.age || '';
-          document.getElementById('gender').value = p.gender || '';
-          if (p.examDate) {
-            const d = new Date(p.examDate);
-            document.getElementById('examDate').value = !isNaN(d) ? d.toISOString().split('T')[0] : p.examDate.substring(0, 10);
-          }
-          document.getElementById('phone').value = p.phone !== 'N/A' ? (p.phone || '') : '';
-          document.getElementById('school_class').value = p.school_class !== 'N/A' ? (p.school_class || '') : '';
-
-          // Station 2
-          setCheckedValues('blurred', p.blurred_vision);
-          document.getElementById('h_pain').checked = (p.eye_pain === 'Yes');
-          document.getElementById('h_spectacles').checked = (p.wears_spectacles === 'Yes');
-          document.getElementById('h_meds').checked = (p.uses_meds === 'Yes');
-          document.getElementById('h_surgery').checked = (p.surgery_history === 'Yes');
-          document.getElementById('h_diabetes').checked = (p.diabetes === 'Yes');
-          document.getElementById('h_hypertension').checked = (p.hypertension === 'Yes');
-          document.getElementById('h_squint').checked = (p.squint_lazy_eye === 'Yes');
-          document.getElementById('h_headache').checked = (p.headaches_reading === 'Yes');
-          if (p.history_outcome) {
-            const r = document.querySelector(`input[name="history_res"][value="${p.history_outcome}"]`);
-            if (r) r.checked = true;
-          }
-
-          // Station 3
-          document.getElementById('dist_cond').value = p.dist_condition || 'Without spectacles';
-          document.getElementById('dist_re').value = (p.dist_re !== 'N/A' ? p.dist_re : '') || '';
-          document.getElementById('dist_le').value = (p.dist_le !== 'N/A' ? p.dist_le : '') || '';
-          if (p.dist_outcome) {
-            const r = document.querySelector(`input[name="dist_res"][value="${p.dist_outcome}"]`);
-            if (r) r.checked = true;
-          }
-          document.getElementById('near_cond').value = p.near_condition || 'Without spectacles';
-          document.getElementById('near_re').value = (p.near_re !== 'N/A' ? p.near_re : '') || '';
-          document.getElementById('near_le').value = (p.near_le !== 'N/A' ? p.near_le : '') || '';
-          if (p.near_outcome) {
-            const r = document.querySelector(`input[name="near_res"][value="${p.near_outcome}"]`);
-            if (r) r.checked = true;
-          }
-
-          // Station 4
-          setCheckedValues('ext_align', p.ext_alignment);
-          setCheckedValues('ext_globe', p.ext_globe);
-          setCheckedValues('ext_lids', p.ext_eyelids_lashes);
-          setCheckedValues('ext_white', p.ext_white_conjunctiva);
-          setCheckedValues('ext_black', p.ext_black_cornea);
-          if (p.ext_outcome) {
-            const r = document.querySelector(`input[name="ext_res"][value="${p.ext_outcome}"]`);
-            if (r) r.checked = true;
-          }
-          document.getElementById('referred_zmec').value = p.referred_zmec || 'No';
-          document.getElementById('optom_name').value = p.optometrist !== 'N/A' ? (p.optometrist || '') : '';
-
-          feedback.textContent = `✅ Loaded: ${p.name || uid}`;
-        } else {
-          alert(`Patient "${uid}" not found. Verify the ID or register them at Station 1.`);
-          feedback.textContent = "UID Not Found";
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Failed to connect to Google Sheet. Please check device connectivity.");
-        feedback.textContent = "Fetch Failed";
-      }
     }
 
-    // Save Section
-    async function saveSection(sectionNumber) {
-      const uidInput = document.getElementById('uid');
-      const uid = uidInput.value.trim();
+    const mode = document.getElementById('form_type').value;
+    const btn = document.querySelector(`#sec${sectionNumber} .section-save-btn`);
+    const originalText = btn.textContent;
+    btn.textContent = "⏳ Syncing...";
+    btn.disabled = true;
 
-      if (!uid) {
-        alert("Please enter a Unique ID in Station 1 before saving.");
-        uidInput.focus();
-        return;
-      }
+    let payloadRecord = {
+      form_type: mode,
+      uid: uid
+    };
 
-      if (sectionNumber === 1) {
-        const site = document.getElementById('site').value.trim();
-        const name = document.getElementById('name').value.trim();
-        const age = document.getElementById('age').value.trim();
-        if (!site || !name || !age) {
-          alert("Please complete Site, Name, and Age before saving Station 1.");
-          return;
-        }
-      }
+    if (sectionNumber === 1) {
+      payloadRecord.site = document.getElementById('site').value.trim();
+      payloadRecord.name = document.getElementById('name').value.trim();
+      payloadRecord.age = document.getElementById('age').value.trim();
+      payloadRecord.gender = document.getElementById('gender').value;
+      payloadRecord.examDate = document.getElementById('examDate').value;
+      payloadRecord.phone = document.getElementById('phone').value.trim() || 'N/A';
+      payloadRecord.school_class = document.getElementById('school_class').value.trim() || 'N/A';
+    } else if (sectionNumber === 2) {
+      payloadRecord.blurred_vision = getCheckedValues('blurred');
+      payloadRecord.eye_pain = document.getElementById('h_pain').checked ? 'Yes' : 'No';
+      payloadRecord.wears_spectacles = document.getElementById('h_spectacles').checked ? 'Yes' : 'No';
+      payloadRecord.uses_meds = document.getElementById('h_meds').checked ? 'Yes' : 'No';
+      payloadRecord.surgery_history = document.getElementById('h_surgery').checked ? 'Yes' : 'No';
+      payloadRecord.diabetes = mode === 'Adult' ? (document.getElementById('h_diabetes').checked ? 'Yes' : 'No') : 'N/A';
+      payloadRecord.hypertension = mode === 'Adult' ? (document.getElementById('h_hypertension').checked ? 'Yes' : 'No') : 'N/A';
+      payloadRecord.squint_lazy_eye = mode === 'Child' ? (document.getElementById('h_squint').checked ? 'Yes' : 'No') : 'N/A';
+      payloadRecord.headaches_reading = mode === 'Child' ? (document.getElementById('h_headache').checked ? 'Yes' : 'No') : 'N/A';
+      payloadRecord.history_outcome = document.querySelector('input[name="history_res"]:checked').value;
+    } else if (sectionNumber === 3) {
+      payloadRecord.dist_condition = document.getElementById('dist_cond').value;
+      payloadRecord.dist_re = document.getElementById('dist_re').value.trim() || 'N/A';
+      payloadRecord.dist_le = document.getElementById('dist_le').value.trim() || 'N/A';
+      payloadRecord.dist_outcome = document.querySelector('input[name="dist_res"]:checked').value;
+      payloadRecord.near_condition = mode === 'Adult' ? document.getElementById('near_cond').value : 'N/A';
+      payloadRecord.near_re = mode === 'Adult' ? (document.getElementById('near_re').value.trim() || 'N/A') : 'N/A';
+      payloadRecord.near_le = mode === 'Adult' ? (document.getElementById('near_le').value.trim() || 'N/A') : 'N/A';
+      payloadRecord.near_outcome = mode === 'Adult' ? document.querySelector('input[name="near_res"]:checked').value : 'N/A';
+    } else if (sectionNumber === 4) {
+      payloadRecord.ext_alignment = getCheckedValues('ext_align');
+      payloadRecord.ext_globe = getCheckedValues('ext_globe');
+      payloadRecord.ext_eyelids_lashes = getCheckedValues('ext_lids');
+      payloadRecord.ext_white_conjunctiva = getCheckedValues('ext_white');
+      payloadRecord.ext_black_cornea = getCheckedValues('ext_black');
+      payloadRecord.ext_outcome = document.querySelector('input[name="ext_res"]:checked').value;
+      payloadRecord.referred_zmec = document.getElementById('referred_zmec').value;
+      payloadRecord.optometrist = document.getElementById('optom_name').value.trim() || 'N/A';
+    }
 
-      const mode = document.getElementById('form_type').value;
-      const btn = document.querySelector(`#sec${sectionNumber} .section-save-btn`);
-      const originalText = btn.textContent;
-      btn.textContent = "⏳ Syncing...";
-      btn.disabled = true;
+    try {
+      const resp = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: "save_section", record: payloadRecord }),
+        redirect: 'follow'
+      });
 
-      let payloadRecord = {
-        form_type: mode,
-        uid: uid
-      };
+      const res = await resp.json();
+      if (res.status === 'success') {
+        btn.textContent = `✅ Station ${sectionNumber} Saved & Synced!`;
+        btn.className = "section-save-btn saved";
+        document.getElementById('syncFeedback').textContent = `● Synced UID: ${uid} (Station ${sectionNumber})`;
+        
+        syncLookupField(uid);
 
-      if (sectionNumber === 1) {
-        payloadRecord.site = document.getElementById('site').value.trim();
-        payloadRecord.name = document.getElementById('name').value.trim();
-        payloadRecord.age = document.getElementById('age').value.trim();
-        payloadRecord.gender = document.getElementById('gender').value;
-        payloadRecord.examDate = document.getElementById('examDate').value;
-        payloadRecord.phone = document.getElementById('phone').value.trim() || 'N/A';
-        payloadRecord.school_class = document.getElementById('school_class').value.trim() || 'N/A';
-      } else if (sectionNumber === 2) {
-        payloadRecord.blurred_vision = getCheckedValues('blurred');
-        payloadRecord.eye_pain = document.getElementById('h_pain').checked ? 'Yes' : 'No';
-        payloadRecord.wears_spectacles = document.getElementById('h_spectacles').checked ? 'Yes' : 'No';
-        payloadRecord.uses_meds = document.getElementById('h_meds').checked ? 'Yes' : 'No';
-        payloadRecord.surgery_history = document.getElementById('h_surgery').checked ? 'Yes' : 'No';
-        payloadRecord.diabetes = mode === 'Adult' ? (document.getElementById('h_diabetes').checked ? 'Yes' : 'No') : 'N/A';
-        payloadRecord.hypertension = mode === 'Adult' ? (document.getElementById('h_hypertension').checked ? 'Yes' : 'No') : 'N/A';
-        payloadRecord.squint_lazy_eye = mode === 'Child' ? (document.getElementById('h_squint').checked ? 'Yes' : 'No') : 'N/A';
-        payloadRecord.headaches_reading = mode === 'Child' ? (document.getElementById('h_headache').checked ? 'Yes' : 'No') : 'N/A';
-        payloadRecord.history_outcome = document.querySelector('input[name="history_res"]:checked').value;
-      } else if (sectionNumber === 3) {
-        payloadRecord.dist_condition = document.getElementById('dist_cond').value;
-        payloadRecord.dist_re = document.getElementById('dist_re').value.trim() || 'N/A';
-        payloadRecord.dist_le = document.getElementById('dist_le').value.trim() || 'N/A';
-        payloadRecord.dist_outcome = document.querySelector('input[name="dist_res"]:checked').value;
-        payloadRecord.near_condition = mode === 'Adult' ? document.getElementById('near_cond').value : 'N/A';
-        payloadRecord.near_re = mode === 'Adult' ? (document.getElementById('near_re').value.trim() || 'N/A') : 'N/A';
-        payloadRecord.near_le = mode === 'Adult' ? (document.getElementById('near_le').value.trim() || 'N/A') : 'N/A';
-        payloadRecord.near_outcome = mode === 'Adult' ? document.querySelector('input[name="near_res"]:checked').value : 'N/A';
-      } else if (sectionNumber === 4) {
-        payloadRecord.ext_alignment = getCheckedValues('ext_align');
-        payloadRecord.ext_globe = getCheckedValues('ext_globe');
-        payloadRecord.ext_eyelids_lashes = getCheckedValues('ext_lids');
-        payloadRecord.ext_white_conjunctiva = getCheckedValues('ext_white');
-        payloadRecord.ext_black_cornea = getCheckedValues('ext_black');
-        payloadRecord.ext_outcome = document.querySelector('input[name="ext_res"]:checked').value;
-        payloadRecord.referred_zmec = document.getElementById('referred_zmec').value;
-        payloadRecord.optometrist = document.getElementById('optom_name').value.trim() || 'N/A';
-      }
-
-      try {
-        const resp = await fetch(APPS_SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: "save_section", record: payloadRecord }),
-          redirect: 'follow'
-        });
-
-        const res = await resp.json();
-        if (res.status === 'success') {
-          btn.textContent = `✅ Station ${sectionNumber} Saved & Synced!`;
-          btn.className = "section-save-btn saved";
-          document.getElementById('syncFeedback').textContent = `● Synced UID: ${uid} (Station ${sectionNumber})`;
-          
-          syncLookupField(uid);
-
-          setTimeout(() => {
-            btn.textContent = originalText;
-            btn.className = "section-save-btn";
-            btn.disabled = false;
-          }, 2200);
-        } else {
-          alert("Google Sheet returned an error: " + res.message);
+        setTimeout(() => {
           btn.textContent = originalText;
+          btn.className = "section-save-btn";
           btn.disabled = false;
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Network Error: Could not reach Google Sheets. Please verify the device's internet connection.");
+        }, 2200);
+      } else {
+        alert("Google Sheet returned an error: " + res.message);
         btn.textContent = originalText;
         btn.disabled = false;
       }
+    } catch (err) {
+      console.error(err);
+      alert("Network Error: Could not reach Google Sheets. Please verify the device's internet connection.");
+      btn.textContent = originalText;
+      btn.disabled = false;
     }
+  }
 
-    // Reset Form
-    function startNewPatient() {
-      const siteVal = document.getElementById('site').value;
-      const optomVal = document.getElementById('optom_name').value;
-      
-      document.querySelectorAll('input[type="text"], input[type="number"], input[type="tel"]').forEach(i => i.value = '');
-      document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
-      document.querySelectorAll('input[value="Normal"], input[value="Straight Eyes"]').forEach(c => c.checked = true);
-      document.querySelectorAll('input[value="Pass"]').forEach(r => r.checked = true);
-      document.getElementById('dist_cond').value = 'Without spectacles';
-      document.getElementById('near_cond').value = 'Without spectacles';
-      document.getElementById('referred_zmec').value = 'No';
+  // Reset Form for New Patient
+  function startNewPatient() {
+    const siteVal = document.getElementById('site').value;
+    const optomVal = document.getElementById('optom_name').value;
+    
+    document.querySelectorAll('input[type="text"], input[type="number"], input[type="tel"]').forEach(i => i.value = '');
+    document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+    document.querySelectorAll('input[value="Normal"], input[value="Straight Eyes"]').forEach(c => c.checked = true);
+    document.querySelectorAll('input[value="Pass"]').forEach(r => r.checked = true);
+    document.getElementById('dist_cond').value = 'Without spectacles';
+    document.getElementById('near_cond').value = 'Without spectacles';
+    document.getElementById('referred_zmec').value = 'No';
 
-      document.getElementById('site').value = siteVal;
-      document.getElementById('optom_name').value = optomVal;
-      
-      const examDateEl = document.getElementById('examDate');
-      if (examDateEl) examDateEl.value = new Date().toISOString().split('T')[0];
-      
-      document.getElementById('lookupUID').value = '';
-      document.getElementById('syncFeedback').textContent = 'Ready for new patient';
-    }
+    document.getElementById('site').value = siteVal;
+    document.getElementById('optom_name').value = optomVal;
+    
+    const examDateEl = document.getElementById('examDate');
+    if (examDateEl) examDateEl.value = new Date().toISOString().split('T')[0];
+    
+    document.getElementById('lookupUID').value = '';
+    document.getElementById('syncFeedback').textContent = 'Ready for new patient';
+  }
 
-    // Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js', { scope: './' })
-          .then((reg) => {
-            console.log('SW Registered successfully with scope:', reg.scope);
-            reg.update();
-          })
-          .catch((err) => console.error('SW Registration Failed:', err));
-      });
-    }
-  </script>
+  // Service Worker Registration
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js', { scope: './' })
+        .then((reg) => {
+          console.log('SW Registered successfully with scope:', reg.scope);
+          reg.update();
+        })
+        .catch((err) => console.error('SW Registration Failed:', err));
+    });
+  }
+</script>
 </body>
 </html>
