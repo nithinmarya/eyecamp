@@ -373,7 +373,7 @@
     } else if (changedInput !== noneBox && changedInput.checked) {
       noneBox.checked = false;
     } else if (!noneBox.checked && !reBox.checked && !leBox.checked) {
-      noneBox.checked = true; // Fallback to No Cataract if everything is unchecked
+      noneBox.checked = true; // Fallback default
     }
   }
 
@@ -417,7 +417,7 @@
     }
   }
 
-  // Real-Time Patient Fetch from Google Sheet
+  // Real-Time Patient Fetch from Google Sheet (Using POST to prevent 302 redirect CORS drops)
   async function fetchPatientByUID() {
     const uid = document.getElementById('lookupUID').value.trim();
     if (!uid) {
@@ -429,9 +429,10 @@
     feedback.textContent = "⏳ Fetching patient from cloud...";
 
     try {
-      const fetchUrl = `${APPS_SCRIPT_URL}?uid=${encodeURIComponent(uid)}`;
-      const resp = await fetch(fetchUrl, {
-        method: 'GET',
+      const resp = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: "fetch_patient", uid: uid }),
         redirect: 'follow'
       });
 
@@ -449,7 +450,7 @@
         document.getElementById('gender').value = p.gender || '';
         if (p.examDate) {
           const d = new Date(p.examDate);
-          document.getElementById('examDate').value = !isNaN(d) ? d.toISOString().split('T')[0] : p.examDate.substring(0, 10);
+          document.getElementById('examDate').value = !isNaN(d) ? d.toISOString().split('T')[0] : String(p.examDate).substring(0, 10);
         }
         document.getElementById('phone').value = p.phone !== 'N/A' ? (p.phone || '') : '';
         document.getElementById('school_class').value = p.school_class !== 'N/A' ? (p.school_class || '') : '';
@@ -514,7 +515,7 @@
         feedback.textContent = "UID Not Found";
       }
     } catch (err) {
-      console.error(err);
+      console.error("Fetch error details:", err);
       alert("Failed to connect to Google Sheet. Please check device connectivity.");
       feedback.textContent = "Fetch Failed";
     }
