@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eyecamp-v10';
+const CACHE_NAME = 'eyecamp-v11';
 
 const STATIC_ASSETS = [
   './',
@@ -8,7 +8,6 @@ const STATIC_ASSETS = [
   'icon-512.png'
 ];
 
-// Pre-cache static assets safely
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -20,7 +19,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Clear older caches on activation
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -34,31 +32,27 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Intercept network requests safely
 self.addEventListener('fetch', (event) => {
-  // Only intercept GET requests
   if (event.request.method !== 'GET') return;
 
-  // CRITICAL FIX: Only handle http: and https: schemes (ignores chrome-extension://, moz-extension://, etc.)
   const url = new URL(event.request.url);
+
+  // Prevent browser extension schemes from crashing cache
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     return;
   }
 
-  // Do not intercept or cache Google Apps Script calls
+  // Never cache or intercept Google Apps Script calls
   if (url.hostname.includes('script.google.com') || url.hostname.includes('googleusercontent.com')) {
     return;
   }
 
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+      if (cachedResponse) return cachedResponse;
 
       return fetch(event.request)
         .then((networkResponse) => {
-          // Verify response is valid and from a cacheable HTTP/S source before saving
           if (
             networkResponse &&
             networkResponse.status === 200 &&
@@ -70,7 +64,6 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(async () => {
-          // Serve offline fallback for page navigation
           if (event.request.mode === 'navigate' || event.request.destination === 'document') {
             return caches.match('index.html') || caches.match('./');
           }
