@@ -219,7 +219,7 @@
     <button type="button" class="section-save-btn" onclick="saveSection(3)">💾 Save Station 3 Data</button>
   </fieldset>
 
-  <!-- NEW Section 4: Intra Ocular Pressure (IOP) -->
+  <!-- Section 4: Intra Ocular Pressure (IOP) -->
   <fieldset id="sec4">
     <legend>Station 4: Intra Ocular Pressure (IOP)</legend>
     <div class="grid-2">
@@ -235,7 +235,7 @@
     <button type="button" class="section-save-btn" onclick="saveSection(4)">💾 Save Station 4 Data</button>
   </fieldset>
 
-  <!-- MOVED Section 5: External Eye Exam, Cataract & Sign-Off -->
+  <!-- Section 5: Basic External Eye Exam & Sign-Off -->
   <fieldset id="sec5">
     <legend>Station 5: Basic External Eye Exam & Sign-Off</legend>
     <div class="check-box-panel">
@@ -289,20 +289,27 @@
       </div>
     </div>
 
-    <div class="form-group">
-        <label><strong>Cataract Present:</strong></label>
-        <div class="check-group" style="margin-top: 6px;">
-          <label class="check-item">
-            <input type="checkbox" name="cataract_choice" id="cat_none" value="No Cataract" checked onchange="handleCataractChange(this)"> No Cataract
-          </label>
-          <label class="check-item">
-            <input type="checkbox" name="cataract_choice" id="cat_re" value="Right Eye" onchange="handleCataractChange(this)"> Right Eye
-          </label>
-          <label class="check-item">
-            <input type="checkbox" name="cataract_choice" id="cat_le" value="Left Eye" onchange="handleCataractChange(this)"> Left Eye
-          </label>
-        </div>
+    <!-- Cataract Selection (Mutually Exclusive Checkboxes) -->
+    <div class="check-box-panel" style="margin-top: 10px;">
+      <span class="sub-heading">Cataract Present:</span>
+      <div class="check-group">
+        <label class="check-item">
+          <input type="checkbox" name="cataract_choice" id="cat_none" value="No Cataract" checked onchange="handleCataractChange(this)"> No Cataract
+        </label>
+        <label class="check-item">
+          <input type="checkbox" name="cataract_choice" id="cat_re" value="Right Eye" onchange="handleCataractChange(this)"> Right Eye
+        </label>
+        <label class="check-item">
+          <input type="checkbox" name="cataract_choice" id="cat_le" value="Left Eye" onchange="handleCataractChange(this)"> Left Eye
+        </label>
       </div>
+    </div>
+
+    <div class="pass-refer" style="margin-top: 10px;">
+      <label><strong>External Exam Outcome:</strong></label>
+      <label><input type="radio" name="ext_res" value="Pass" checked> Pass</label>
+      <label><input type="radio" name="ext_res" value="Refer"> Refer</label>
+    </div>
 
     <div class="grid-2" style="margin-top: 10px;">
       <div class="form-group">
@@ -352,6 +359,22 @@
     document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
       cb.checked = items.includes(cb.value);
     });
+  }
+
+  // Mutually exclusive toggle for Cataract checkboxes
+  function handleCataractChange(changedInput) {
+    const noneBox = document.getElementById('cat_none');
+    const reBox = document.getElementById('cat_re');
+    const leBox = document.getElementById('cat_le');
+
+    if (changedInput === noneBox && noneBox.checked) {
+      reBox.checked = false;
+      leBox.checked = false;
+    } else if (changedInput !== noneBox && changedInput.checked) {
+      noneBox.checked = false;
+    } else if (!noneBox.checked && !reBox.checked && !leBox.checked) {
+      noneBox.checked = true; // Fallback to No Cataract if everything is unchecked
+    }
   }
 
   // Network Watcher
@@ -466,13 +489,18 @@
         document.getElementById('iop_re').value = (p.iop_re !== 'N/A' ? p.iop_re : '') || '';
         document.getElementById('iop_le').value = (p.iop_le !== 'N/A' ? p.iop_le : '') || '';
 
-        // Station 5: External Exam & Sign-Off
+        // Station 5: External Exam, Cataract & Sign-Off
         setCheckedValues('ext_align', p.ext_alignment);
         setCheckedValues('ext_globe', p.ext_globe);
         setCheckedValues('ext_lids', p.ext_eyelids_lashes);
         setCheckedValues('ext_white', p.ext_white_conjunctiva);
         setCheckedValues('ext_black', p.ext_black_cornea);
-        document.getElementById('cataract').value = p.cataract || 'No';
+        
+        setCheckedValues('cataract_choice', p.cataract);
+        if (!p.cataract || p.cataract === 'None') {
+          document.getElementById('cat_none').checked = true;
+        }
+
         if (p.ext_outcome) {
           const r = document.querySelector(`input[name="ext_res"][value="${p.ext_outcome}"]`);
           if (r) r.checked = true;
@@ -561,7 +589,7 @@
       payloadRecord.ext_eyelids_lashes = getCheckedValues('ext_lids');
       payloadRecord.ext_white_conjunctiva = getCheckedValues('ext_white');
       payloadRecord.ext_black_cornea = getCheckedValues('ext_black');
-      payloadRecord.cataract = document.getElementById('cataract').value;
+      payloadRecord.cataract = getCheckedValues('cataract_choice');
       payloadRecord.ext_outcome = document.querySelector('input[name="ext_res"]:checked').value;
       payloadRecord.referred_zmec = document.getElementById('referred_zmec').value;
       payloadRecord.optometrist = document.getElementById('optom_name').value.trim() || 'N/A';
@@ -610,9 +638,12 @@
     document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
     document.querySelectorAll('input[value="Normal"], input[value="Straight Eyes"]').forEach(c => c.checked = true);
     document.querySelectorAll('input[value="Pass"]').forEach(r => r.checked = true);
+    
+    // Cataract default
+    document.getElementById('cat_none').checked = true;
+    
     document.getElementById('dist_cond').value = 'Without spectacles';
     document.getElementById('near_cond').value = 'Without spectacles';
-    document.getElementById('cataract').value = 'No';
     document.getElementById('referred_zmec').value = 'No';
 
     document.getElementById('site').value = siteVal;
