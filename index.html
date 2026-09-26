@@ -289,22 +289,20 @@
       </div>
     </div>
 
-    <div class="grid-2" style="margin-top: 10px;">
-      <div class="form-group">
-        <label><strong>Cataract Present? *</strong></label>
-        <select id="cataract">
-          <option value="No">No</option>
-          <option value="Yes">Yes</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label><strong>External Exam Outcome:</strong></label>
-        <div class="pass-refer" style="margin-top: 0; padding: 6px 12px;">
-          <label><input type="radio" name="ext_res" value="Pass" checked> Pass</label>
-          <label><input type="radio" name="ext_res" value="Refer"> Refer</label>
+    <div class="form-group">
+        <label><strong>Cataract Present:</strong></label>
+        <div class="check-group" style="margin-top: 6px;">
+          <label class="check-item">
+            <input type="checkbox" name="cataract_choice" id="cat_none" value="No Cataract" checked onchange="handleCataractChange(this)"> No Cataract
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="cataract_choice" id="cat_re" value="Right Eye" onchange="handleCataractChange(this)"> Right Eye
+          </label>
+          <label class="check-item">
+            <input type="checkbox" name="cataract_choice" id="cat_le" value="Left Eye" onchange="handleCataractChange(this)"> Left Eye
+          </label>
         </div>
       </div>
-    </div>
 
     <div class="grid-2" style="margin-top: 10px;">
       <div class="form-group">
