@@ -219,9 +219,25 @@
     <button type="button" class="section-save-btn" onclick="saveSection(3)">💾 Save Station 3 Data</button>
   </fieldset>
 
-  <!-- Section 4: External Eye Exam & Referral -->
+  <!-- NEW Section 4: Intra Ocular Pressure (IOP) -->
   <fieldset id="sec4">
-    <legend>Station 4: Basic External Eye Exam & Sign-Off</legend>
+    <legend>Station 4: Intra Ocular Pressure (IOP)</legend>
+    <div class="grid-2">
+      <div class="form-group">
+        <label>Right Eye IOP (RE - mmHg)</label>
+        <input type="number" id="iop_re" step="0.1" min="0" max="80" placeholder="e.g. 15.0" />
+      </div>
+      <div class="form-group">
+        <label>Left Eye IOP (LE - mmHg)</label>
+        <input type="number" id="iop_le" step="0.1" min="0" max="80" placeholder="e.g. 16.0" />
+      </div>
+    </div>
+    <button type="button" class="section-save-btn" onclick="saveSection(4)">💾 Save Station 4 Data</button>
+  </fieldset>
+
+  <!-- MOVED Section 5: External Eye Exam, Cataract & Sign-Off -->
+  <fieldset id="sec5">
+    <legend>Station 5: Basic External Eye Exam & Sign-Off</legend>
     <div class="check-box-panel">
       <span class="sub-heading">Alignment:</span>
       <div class="check-group">
@@ -273,10 +289,21 @@
       </div>
     </div>
 
-    <div class="pass-refer">
-      <label><strong>External Exam Outcome:</strong></label>
-      <label><input type="radio" name="ext_res" value="Pass" checked> Pass</label>
-      <label><input type="radio" name="ext_res" value="Refer"> Refer</label>
+    <div class="grid-2" style="margin-top: 10px;">
+      <div class="form-group">
+        <label><strong>Cataract Present? *</strong></label>
+        <select id="cataract">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label><strong>External Exam Outcome:</strong></label>
+        <div class="pass-refer" style="margin-top: 0; padding: 6px 12px;">
+          <label><input type="radio" name="ext_res" value="Pass" checked> Pass</label>
+          <label><input type="radio" name="ext_res" value="Refer"> Refer</label>
+        </div>
+      </div>
     </div>
 
     <div class="grid-2" style="margin-top: 10px;">
@@ -285,11 +312,11 @@
         <select id="referred_zmec"><option value="No">No</option><option value="Yes">Yes</option></select>
       </div>
       <div class="form-group">
-        <label>Optometrist Name *</label>
+        <label>Optometrist / Examiner Name *</label>
         <input type="text" id="optom_name" placeholder="Optometrist Name/ID" />
       </div>
     </div>
-    <button type="button" class="section-save-btn" onclick="saveSection(4)">💾 Save Station 4 Data</button>
+    <button type="button" class="section-save-btn" onclick="saveSection(5)">💾 Save Station 5 Data</button>
   </fieldset>
 
   <footer class="app-footer">
@@ -369,7 +396,7 @@
     }
   }
 
-  // Real-Time Patient Fetch from Google Sheet (GET-based for zero CORS/redirect failure)
+  // Real-Time Patient Fetch from Google Sheet
   async function fetchPatientByUID() {
     const uid = document.getElementById('lookupUID').value.trim();
     if (!uid) {
@@ -393,7 +420,7 @@
         const p = res.patient;
         setFormMode(p.form_type || 'Adult');
 
-        // Populate Station 1
+        // Station 1
         document.getElementById('site').value = p.site || '';
         document.getElementById('uid').value = p.uid || uid;
         document.getElementById('name').value = p.name || '';
@@ -406,7 +433,7 @@
         document.getElementById('phone').value = p.phone !== 'N/A' ? (p.phone || '') : '';
         document.getElementById('school_class').value = p.school_class !== 'N/A' ? (p.school_class || '') : '';
 
-        // Populate Station 2
+        // Station 2
         setCheckedValues('blurred', p.blurred_vision);
         document.getElementById('h_pain').checked = (p.eye_pain === 'Yes');
         document.getElementById('h_spectacles').checked = (p.wears_spectacles === 'Yes');
@@ -421,7 +448,7 @@
           if (r) r.checked = true;
         }
 
-        // Populate Station 3
+        // Station 3
         document.getElementById('dist_cond').value = p.dist_condition || 'Without spectacles';
         document.getElementById('dist_re').value = (p.dist_re !== 'N/A' ? p.dist_re : '') || '';
         document.getElementById('dist_le').value = (p.dist_le !== 'N/A' ? p.dist_le : '') || '';
@@ -437,12 +464,17 @@
           if (r) r.checked = true;
         }
 
-        // Populate Station 4
+        // Station 4: IOP
+        document.getElementById('iop_re').value = (p.iop_re !== 'N/A' ? p.iop_re : '') || '';
+        document.getElementById('iop_le').value = (p.iop_le !== 'N/A' ? p.iop_le : '') || '';
+
+        // Station 5: External Exam & Sign-Off
         setCheckedValues('ext_align', p.ext_alignment);
         setCheckedValues('ext_globe', p.ext_globe);
         setCheckedValues('ext_lids', p.ext_eyelids_lashes);
         setCheckedValues('ext_white', p.ext_white_conjunctiva);
         setCheckedValues('ext_black', p.ext_black_cornea);
+        document.getElementById('cataract').value = p.cataract || 'No';
         if (p.ext_outcome) {
           const r = document.querySelector(`input[name="ext_res"][value="${p.ext_outcome}"]`);
           if (r) r.checked = true;
@@ -523,11 +555,15 @@
       payloadRecord.near_le = mode === 'Adult' ? (document.getElementById('near_le').value.trim() || 'N/A') : 'N/A';
       payloadRecord.near_outcome = mode === 'Adult' ? document.querySelector('input[name="near_res"]:checked').value : 'N/A';
     } else if (sectionNumber === 4) {
+      payloadRecord.iop_re = document.getElementById('iop_re').value.trim() || 'N/A';
+      payloadRecord.iop_le = document.getElementById('iop_le').value.trim() || 'N/A';
+    } else if (sectionNumber === 5) {
       payloadRecord.ext_alignment = getCheckedValues('ext_align');
       payloadRecord.ext_globe = getCheckedValues('ext_globe');
       payloadRecord.ext_eyelids_lashes = getCheckedValues('ext_lids');
       payloadRecord.ext_white_conjunctiva = getCheckedValues('ext_white');
       payloadRecord.ext_black_cornea = getCheckedValues('ext_black');
+      payloadRecord.cataract = document.getElementById('cataract').value;
       payloadRecord.ext_outcome = document.querySelector('input[name="ext_res"]:checked').value;
       payloadRecord.referred_zmec = document.getElementById('referred_zmec').value;
       payloadRecord.optometrist = document.getElementById('optom_name').value.trim() || 'N/A';
@@ -578,6 +614,7 @@
     document.querySelectorAll('input[value="Pass"]').forEach(r => r.checked = true);
     document.getElementById('dist_cond').value = 'Without spectacles';
     document.getElementById('near_cond').value = 'Without spectacles';
+    document.getElementById('cataract').value = 'No';
     document.getElementById('referred_zmec').value = 'No';
 
     document.getElementById('site').value = siteVal;
